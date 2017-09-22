@@ -5,11 +5,13 @@ An implementation of a simulated annealing sampler for general Ising model graph
 ## Installation
 
 To install from PyPI:
+
 ```bash
 $ pip install dwave-sage
 ```
 
 To install from this repo, buliding the C++ from source:
+
 ```bash
 $ pip install -r requirements.txt .
 ```
