@@ -29,3 +29,5 @@ $ pip install -r requirements.txt .
 >>> list(response.samples())
 [{0: 1, 1: 1}]
 ```
+
+[1]: https://dwavesystems.github.io/dimod/index.html
