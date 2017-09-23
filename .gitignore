@@ -1,1 +1,5 @@
 *.pyc
+build
+dist
+dwave_sage.egg-info
+general_simulated_annealing.cpp
