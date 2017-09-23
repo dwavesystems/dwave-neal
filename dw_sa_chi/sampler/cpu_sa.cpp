@@ -57,7 +57,7 @@ double get_flip_energy(int var, char *state, vector<double> & h,
 }
 
 /**
- * Performs a single sweep of simulated annealing with the given inputs.
+ * Performs a single run of simulated annealing with the given inputs.
  * @param state a signed char array where each char holds the state of a
  *        variable. Note that this can be unitialized as it will be randomly
  *        set at the beginning of this function.
@@ -68,10 +68,11 @@ double get_flip_energy(int var, char *state, vector<double> & h,
  * @param neighbour_couplings same as neighbors, but instead has the J value.
  *        neighbour_couplings[i][j] is the J value or weight on the coupling
  *        between variables i and neighbors[i][j]. 
- * @param num_sweeps Number of sweeps to perform
- * @return Nothing, but `state` now contains the result of the sweep.
+ * @param beta_schedule A list of the beta values to run each sweep at. The
+ *        size of `beta_schedule` is the number of sweeps to perform.
+ * @return Nothing, but `state` now contains the result of the run.
  */
-void simulated_annealing_sweep(char* state, vector<double>& h, 
+void simulated_annealing_run(char* state, vector<double>& h, 
                                vector<int>& degrees, 
                                vector<vector<int>>& neighbors, 
                                vector<vector<double>>& neighbour_couplings,
@@ -197,10 +198,10 @@ double get_state_energy(char* state, vector<double> h,
 
 /**
  * Perform simulated annealing on a general problem
- * @param states a char array of size num_sweeps * number of variables in the
+ * @param states a char array of size num_samples * number of variables in the
  *        problem. Will be overwritten by this function as samples are filled
  *        in.
- * @param num_sweeps the number of samples to get.
+ * @param num_samples the number of samples to get.
  * @param h vector of h or field value on each variable
  * @param coupler_starts an int vector containing the variables of one side of
  *        each coupler in the problem
@@ -213,7 +214,7 @@ double get_state_energy(char* state, vector<double> h,
  * @return A double vector containing the energies of all the states that were
  *         written to `states`.
  */
-vector<double> general_simulated_annealing(char* states, const int num_sweeps,
+vector<double> general_simulated_annealing(char* states, const int num_samples,
                                            vector<double> h, 
                                            vector<int> coupler_starts, 
                                            vector<int> coupler_ends, 
@@ -222,7 +223,7 @@ vector<double> general_simulated_annealing(char* states, const int num_sweeps,
                                            uint64_t seed) {
 
     // TODO 
-    // assert len(states) == num_sweeps*num_vars*sizeof(char)
+    // assert len(states) == num_samples*num_vars*sizeof(char)
     // assert len(coupler_starts) == len(coupler_ends) == len(coupler_weights)
     // assert max(coupler_starts + coupler_ends) < num_vars
     
@@ -250,7 +251,7 @@ vector<double> general_simulated_annealing(char* states, const int num_sweeps,
     vector<vector<double>> neighbour_couplings(num_vars);
 
     // this will store the resulting energy after getting each sample
-    vector<double> energies(num_sweeps);
+    vector<double> energies(num_samples);
 
     // build the degrees, neighbors, and neighbour_couplings vectors by
     // iterating over the inputted coupler vectors
@@ -274,18 +275,18 @@ vector<double> general_simulated_annealing(char* states, const int num_sweeps,
         degrees[v]++;
     }
 
-    // perform the simulated annealing sweeps
-    for (int sweep = 0; sweep < num_sweeps; sweep++) {
+    // get the simulated annealing samples
+    for (int sample = 0; sample < num_samples; sample++) {
         // states is a giant spin array that will hold the resulting states for
-        // all the sweeps, so we need to get the location inside that vector
-        // where we will store the sample for this sweep
-        char *state = states + sweep*num_vars;
-        // then do the actual sweep. this function will modify state, storing
+        // all the samples, so we need to get the location inside that vector
+        // where we will store the sample for this sample
+        char *state = states + sample*num_vars;
+        // then do the actual sample. this function will modify state, storing
         // the sample there
-        simulated_annealing_sweep(state, h, degrees, 
+        simulated_annealing_run(state, h, degrees, 
                                 neighbors, neighbour_couplings, beta_schedule);
         // compute the energy of the sample and store it in `energies`
-        energies[sweep] = get_state_energy(state, h, coupler_starts, 
+        energies[sample] = get_state_energy(state, h, coupler_starts, 
                                          coupler_ends, coupler_weights);
     }
 
