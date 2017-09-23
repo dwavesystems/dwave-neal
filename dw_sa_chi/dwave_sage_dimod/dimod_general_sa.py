@@ -17,7 +17,7 @@ else:
 class DWaveSAGeSampler(TemplateSampler):
     @ising(1, 2)
     def sample_ising(self, h, J, beta_range=None, num_samples=10, sweeps=1000,
-                     beta_schedule_type="linear", seed=None):
+                     seed=None):
         """
         Sample from low-energy spin states using simulated annealing 
         sampler written in C++.
@@ -59,9 +59,12 @@ class DWaveSAGeSampler(TemplateSampler):
             >>> list(response.samples())
             [{0: 1, 1: 1}]
 
-        Note:
-            This requires the GeneralSimulatedAnnealing Cython
-            interface to the C++ CPU solver.
+        Notes:
+        ------
+        This requires the GeneralSimulatedAnnealing Cython
+        interface to the C++ CPU solver.
+
+        A linear scheudule is used for beta.
         """
 
         # input checking
@@ -97,11 +100,9 @@ class DWaveSAGeSampler(TemplateSampler):
 
             beta_range.append(2 * max(itervalues(sigmas)))
 
-        if beta_schedule_type == "linear":
-            beta_step = (beta_range[1] - beta_range[0]) / sweeps
-            beta_schedule = [beta_range[0]+s*beta_step for s in range(sweeps)]
-        else:
-            raise NotImplementedError("unknown beta schedule type")
+        # interpolate a linear beta schedule
+        beta_step = (beta_range[1] - beta_range[0]) / sweeps
+        beta_schedule = [beta_range[0]+s*beta_step for s in range(sweeps)]
 
         if seed is None:
             # pick a random seed
