@@ -4,6 +4,7 @@
 #include <ctime>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 #include "cpu_sa.h"
 
 /**

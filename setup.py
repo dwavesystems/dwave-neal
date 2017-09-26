@@ -1,5 +1,6 @@
 from setuptools import setup, Extension
 from Cython.Distutils import build_ext
+import numpy
 
 src_folder = "dw_sa_chi/"
 
@@ -9,10 +10,11 @@ ext_module = Extension("dwave_sage_sampler",
         language="c++",
         extra_compile_args=["-std=c++11"],
         extra_link_args=["-std=c++11"],
+        include_dirs=[numpy.get_include()]
         )
 
 setup(name="dwave_sage",
-      version="0.1",
+      version="0.1.1",
       description="General Ising graph simulated annealing solver",
       author="William Bernoudy",
       author_email="wbernoudy@dwavesys.com",
@@ -24,5 +26,5 @@ setup(name="dwave_sage",
       install_requires=[
           "numpy",
           "dimod",
-      ]) 
+      ])
 
