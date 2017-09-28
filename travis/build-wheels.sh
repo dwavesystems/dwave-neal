@@ -19,7 +19,10 @@ for whl in wheelhouse/*.whl; do
 done
 
 mkdir /io/good_wheelhouse
-cp /io/wheelhouse/*dwave* /io/good_wheelhouse/
+for DWAVE_WHEEL in /io/wheelhouse/*dwave*; do
+    cp "${DWAVE_WHEEL}" /io/good_wheelhouse/
+done
+ls /io/good_wheelhouse
 
 # Install packages and test
 for PYBIN in /opt/python/*/bin/; do
