@@ -24,6 +24,6 @@ for PYBIN in /opt/python/*/bin/; do
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
     fi
-    "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse
+    "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/*dwave_sage*
     (cd "/io/dw_sa_chi"; "${PYBIN}/python" -m unittest discover)
 done
