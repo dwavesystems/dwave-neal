@@ -25,5 +25,5 @@ for PYBIN in /opt/python/*/bin/; do
         continue
     fi
     "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse
-    (cd "$HOME"; "${PYBIN}/python" /io/dw_sa_chi/tests/test_python_sa_wrapper.py)
+    (cd "/io/dw_sa_chi"; "${PYBIN}/python" -m unittest discover)
 done
