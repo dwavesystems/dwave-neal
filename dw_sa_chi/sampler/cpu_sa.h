@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #ifndef _cpu_sa_h
 #define _cpu_sa_h
 
@@ -24,6 +26,6 @@ std::vector<double> general_simulated_annealing(char *states,
                                           std::vector<int> coupler_ends, 
                                           std::vector<double> coupler_values,
                                           std::vector<double> beta_schedule,
-                                          uint64_t seed);
+                                          std::uint64_t seed);
 
 #endif
