@@ -37,13 +37,13 @@ environment:
       PYTHON_VERSION: "3.3.x" # currently 3.3.5
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.x" # currently 3.4.3
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.x" # currently 3.4.3
-      PYTHON_ARCH: "64"
+#   - PYTHON: "C:\\Python34"
+#     PYTHON_VERSION: "3.4.x" # currently 3.4.3
+#     PYTHON_ARCH: "32"
+#
+#   - PYTHON: "C:\\Python34-x64"
+#     PYTHON_VERSION: "3.4.x" # currently 3.4.3
+#     PYTHON_ARCH: "64"
 
     # Python versions not pre-installed
 
@@ -126,7 +126,9 @@ build_script:
 
 test_script:
   # Run the project tests
+  - "cd dw_sa_chi"
   - "%CMD_IN_ENV% python -m unittest discover"
+  - "cd .."
 
 after_test:
   # If tests are successful, create binary packages for the project.

@@ -6,7 +6,7 @@ for PYBIN in /opt/python/*/bin; do
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
     fi
-    "${PYBIN}/pip" install -r /io/dev-requirements.txt
+    "${PYBIN}/pip" install -r /io/requirements.txt
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/
 done
 
