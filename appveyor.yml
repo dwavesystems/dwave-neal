@@ -137,6 +137,7 @@ test_script:
   - "cd"
   - "ls"
   - "SET"
+  - "set PYTHONPATH=C:\projects\dw-sa-chi\dw_sa_chi"
   - "%CMD_IN_ENV% python -m unittest discover"
 
 after_test:
