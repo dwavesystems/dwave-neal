@@ -1,15 +1,21 @@
 from setuptools import setup, Extension
 from Cython.Distutils import build_ext
+import platform
 import numpy
 
 src_folder = "dw_sa_chi/"
+
+cpp_version_arg = "-std=c++11" # default, works on linux
+
+if platform.system().lower() == "windows":
+    cpp_version_arg = "/std:c++11"
 
 ext_module = Extension("dwave_sage_sampler", 
         [src_folder + "sampler/" + "general_simulated_annealing.pyx", 
             src_folder + "sampler/" + "cpu_sa.cpp"], 
         language="c++",
-        extra_compile_args=["-std=c++11"],
-        extra_link_args=["-std=c++11"],
+        extra_compile_args=[cpp_version_arg],
+        extra_link_args=[cpp_version_arg],
         include_dirs=[numpy.get_include()]
         )
 
