@@ -18,18 +18,12 @@ for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" -w /io/wheelhouse/
 done
 
-mkdir /io/good_wheelhouse
-for DWAVE_WHEEL in /io/wheelhouse/*dwave*; do
-    cp "${DWAVE_WHEEL}" /io/good_wheelhouse/
-done
-ls /io/good_wheelhouse
-
 # Install packages and test
 for PYBIN in /opt/python/*/bin/; do
     if [[ ${PYBIN} =~ 26|33 ]]; then
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
     fi
-    "${PYBIN}/pip" install dwave_sage --no-index -f /io/good_wheelhouse/
+    "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/
     (cd "/io/dw_sa_chi"; "${PYBIN}/python" -m unittest discover)
 done
