@@ -230,7 +230,7 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
     
     // the number of variables in the problem
     const int num_vars = h.size();
-    if (not ((coupler_starts.size() == coupler_ends.size()) and
+    if (!((coupler_starts.size() == coupler_ends.size()) &&
                 (coupler_starts.size() == coupler_weights.size()))) {
         throw runtime_error("coupler vectors have mismatched lengths");
     }
@@ -260,7 +260,7 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
         int u = coupler_starts[cplr];
         int v = coupler_ends[cplr];
 
-        if ((u < 0) or (v < 0)  or (u >= num_vars) or (v >= num_vars)) {
+        if ((u < 0) || (v < 0) || (u >= num_vars) || (v >= num_vars)) {
             throw runtime_error("coupler indexes contain an invalid variable");
         }
 
