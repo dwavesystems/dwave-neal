@@ -7,6 +7,10 @@ environment:
 
   matrix:
 
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.0"
+      PYTHON_ARCH: "64"
+
     # Python 2.7.10 is the latest version and is not pre-installed.
 
     - PYTHON: "C:\\Python27.10"
@@ -74,10 +78,6 @@ environment:
       PYTHON_VERSION: "3.6.0"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.0"
-      PYTHON_ARCH: "64"
-
     # Major and minor releases (i.e x.0.0 and x.y.0) prior to 3.3.0 use
     # a different naming scheme.
 
@@ -137,7 +137,7 @@ test_script:
   - "cd"
   - "ls"
   - "SET"
-  - "set PYTHONPATH=C:\projects\dw-sa-chi\dw_sa_chi"
+  - "set PYTHONPATH=\"C:/projects/dw-sa-chi/dw_sa_chi\""
   - "%CMD_IN_ENV% python -m unittest discover"
 
 after_test:
