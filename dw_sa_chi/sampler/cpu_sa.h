@@ -1,7 +1,11 @@
-#include <cstdint>
-
 #ifndef _cpu_sa_h
 #define _cpu_sa_h
+
+#ifdef _MSC_VER
+// add uint64_t definition for windows
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#endif
 
 double get_flip_energy(int var, char *state, std::vector<double> & h, 
                       std::vector<int> & degrees, 
@@ -26,6 +30,6 @@ std::vector<double> general_simulated_annealing(char *states,
                                           std::vector<int> coupler_ends, 
                                           std::vector<double> coupler_values,
                                           std::vector<double> beta_schedule,
-                                          std::uint64_t seed);
+                                          uint64_t seed);
 
 #endif

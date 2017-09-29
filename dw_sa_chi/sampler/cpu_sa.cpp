@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <cstdint>
 #include <math.h>
 #include <ctime>
 #include <vector>
