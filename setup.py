@@ -8,7 +8,7 @@ src_folder = "dw_sa_chi/"
 cpp_version_arg = "-std=c++11" # default, works on linux
 
 if platform.system().lower() == "windows":
-    cpp_version_arg = "/std:c++11"
+    cpp_version_arg = "/std:c++14"
 
 ext_module = Extension("dwave_sage_sampler", 
         [src_folder + "sampler/" + "general_simulated_annealing.pyx", 
