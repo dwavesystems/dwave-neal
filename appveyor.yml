@@ -101,9 +101,9 @@ deploy:
     name: production
     on:
       appveyor_repo_tag: true
+      configuration: production
 
 deploy_script:
-  - "if($env:appveyor_repo_tag -eq 'False') { exit }"
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
   - "echo username: %username% >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
