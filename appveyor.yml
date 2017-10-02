@@ -5,8 +5,10 @@ environment:
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
+  # PyPI login
+  username: wbernoudy
   password:
-    secure: SlcfKf0YzmNUJuzC4N3JOg==
+    secure: 2S2QFwV0EV+ZNZZodJzOphNV/cyH3dYMRY3cw5KhtZs=
 
   matrix:
 
@@ -150,7 +152,7 @@ artifacts:
 on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
-  - "echo username: wbernoudy >> %USERPROFILE%\\.pypirc"
+  - "echo username: %username% >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
   - "%CMD_IN_ENV% pip install twine"
   - "%CMD_IN_ENV% twine upload dist/*"
