@@ -5,11 +5,10 @@ environment:
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
-  matrix:
+  password:
+    secure: SlcfKf0YzmNUJuzC4N3JOg==
 
-    - PYTHON: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.0"
-      PYTHON_ARCH: "64"
+  matrix:
 
     # Python 2.7.10 is the latest version and is not pre-installed.
 
@@ -53,11 +52,6 @@ environment:
 
     # Python 2.6.6 is the latest Python 2.6 with a Windows installer
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
-# Broken because of set comprehension doesn't exist in 2.6.  dropping support.
-# Error is:
-#     File "dimod\decorators.py", line 199
-#        relabel = {v: idx for idx, v in iteritems(inv_relabel)}
-#                            ^
 #    - PYTHON: "C:\\Python266"
 #      PYTHON_VERSION: "2.6.6"
 #      PYTHON_ARCH: "32"
@@ -78,6 +72,10 @@ environment:
       PYTHON_VERSION: "3.6.0"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.0"
+      PYTHON_ARCH: "64"
+
     # Major and minor releases (i.e x.0.0 and x.y.0) prior to 3.3.0 use
     # a different naming scheme.
 
@@ -88,6 +86,7 @@ environment:
     - PYTHON: "C:\\Python270-x64"
       PYTHON_VERSION: "2.7.0"
       PYTHON_ARCH: "64"
+
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -140,14 +139,18 @@ after_test:
   # If tests are successful, create binary packages for the project.
   - "%CMD_IN_ENV% pip install wheel setuptools --upgrade --force"
   - "%CMD_IN_ENV% python setup.py bdist_wheel"
-  - "%CMD_IN_ENV% python setup.py bdist_wininst"
-  - "%CMD_IN_ENV% python setup.py bdist_msi"
+  #- "%CMD_IN_ENV% python setup.py bdist_wininst"
+  #- "%CMD_IN_ENV% python setup.py bdist_msi"
   - ps: "ls dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
+on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
+  - "echo [pypi] > %USERPROFILE%\\.pypirc"
+  - "echo username: wbernoudy >> %USERPROFILE%\\.pypirc"
+  - "echo password: %password% >> %USERPROFILE%\\.pypirc"
+  - "%CMD_IN_ENV% pip install twine"
+  - "%CMD_IN_ENV% twine upload dist/"
