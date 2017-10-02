@@ -153,4 +153,4 @@ on_success:
   - "echo username: wbernoudy >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
   - "%CMD_IN_ENV% pip install twine"
-  - "%CMD_IN_ENV% twine upload dist/"
+  - "%CMD_IN_ENV% twine upload dist/*"
