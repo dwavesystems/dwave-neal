@@ -11,6 +11,8 @@ environment:
     secure: 2S2QFwV0EV+ZNZZodJzOphNV/cyH3dYMRY3cw5KhtZs=
 
   matrix:
+    # Python < 2.7 and < 3.5 are not supported by our required version of numpy
+    # and so are skipped
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
@@ -94,8 +96,13 @@ artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: dist\*
 
-on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
+deploy:
+  - provider: Environment
+    name: production
+    on:
+      appveyor_repo_tag: true
+
+deploy_script:
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
   - "echo username: %username% >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
