@@ -96,16 +96,9 @@ artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: dist\*
 
-deploy:
-  - provider: Environment
-    name: production
-    on:
-      appveyor_repo_tag: true
-      configuration: production
-
 deploy_script:
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
   - "echo username: %username% >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
   - "%CMD_IN_ENV% pip install twine"
-  - "%CMD_IN_ENV% twine upload dist/*"
+  - ps: If ($env:APPVEYOR_REPO_TAG -eq "true") { Invoke-Expression "%CMD_IN_ENV% twine upload dist/*" 2>$null } Else { write-output "Not on a tag on master, won't deploy to pypi"}
