@@ -1,5 +1,8 @@
 # dwave_SAGE
 
+[![Build Status](https://travis-ci.org/dwavesystems/dwave_SAGE.svg?branch=master)](https://travis-ci.org/dwavesystems/dwave_SAGE)
+[![Build status](https://ci.appveyor.com/api/projects/status/ip1j34wt9s9xsvnm?svg=true)](https://ci.appveyor.com/project/wbernoudy/dwave-sage)
+
 An implementation of a simulated annealing sampler for general Ising model graphs in C++ with a [dimod][1] Python wrapper.
 
 ## Installation
