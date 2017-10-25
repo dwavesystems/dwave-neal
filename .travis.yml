@@ -31,6 +31,6 @@ deploy:
   provider: script
   script: travis/upload-wheels.sh
   skip_cleanup: true
-# on:
-#   tags: true
-#   branch: master
+  on:
+    tags: true
+    branch: master
