@@ -1,4 +1,4 @@
-# DWSAGe
+# dwave_SAGE
 
 An implementation of a simulated annealing sampler for general Ising model graphs in C++ with a [dimod][1] Python wrapper.
 
@@ -13,6 +13,8 @@ $ pip install dwave_sage
 To install from this repo, buliding the C++ from source:
 
 ```bash
+$ git clone https://github.com/dwavesystems/dwave_SAGE.git
+$ cd dwave_SAGE
 $ pip install -r requirements.txt .
 ```
 
