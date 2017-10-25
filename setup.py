@@ -3,7 +3,7 @@ from Cython.Distutils import build_ext
 import platform
 import numpy
 
-src_folder = "dw_sa_chi/"
+src_folder = "dwave_sage/"
 
 cpp_version_arg = "-std=c++11" # default, works on linux
 

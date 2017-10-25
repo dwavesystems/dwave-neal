@@ -82,7 +82,7 @@ build_script:
 
 test_script:
   # Run the project tests
-  - "%CMD_IN_ENV% python -m unittest discover -s dw_sa_chi"
+  - "%CMD_IN_ENV% python -m unittest discover -s dwave_sage"
 
 after_test:
   # If tests are successful, create binary packages for the project.
