@@ -8,6 +8,8 @@ for PYBIN in /opt/python/*/bin; do
     fi
     "${PYBIN}/pip" install -r /io/requirements.txt
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    # install coverage
+    "${PYBIN}/pip" install coverage
 done
 
 # Bundle external shared libraries into the wheels
@@ -26,4 +28,5 @@ for PYBIN in /opt/python/*/bin/; do
     fi
     "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/
     (cd "/io/dwave_sage"; "${PYBIN}/python" -m unittest discover)
+    "${PYBIN}/coverage" run --source=dwave_sage -m unittest discover
 done
