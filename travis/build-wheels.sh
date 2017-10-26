@@ -30,5 +30,5 @@ for PYBIN in /opt/python/*/bin/; do
     (cd "/io/dwave_sage"; "${PYBIN}/python" -m unittest discover)
     # -a option on coverage run just appends to the same file so it doesn't
     # get overwritten
-    (cd "/io/dwave_sage"; "${PYBIN}/coverage" run -a -m unittest discover)
+    "${PYBIN}/coverage" run --source=dwave_sage -a -m unittest discover
 done
