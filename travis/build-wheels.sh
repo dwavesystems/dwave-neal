@@ -36,7 +36,7 @@ done
 
 # install coveralls for the last version of python and submit 
 # using that version
-LASTPYBIN={$PYBINS[@]: -1:1}
+LASTPYBIN=${PYBINS[@]: -1:1}
 "${LASTPYBIN}/pip" install coveralls
 
 # submit coverage results to coveralls
