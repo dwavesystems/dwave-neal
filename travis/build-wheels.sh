@@ -21,8 +21,7 @@ for whl in wheelhouse/*.whl; do
 done
 
 # Install packages and test
-PYBINS=(/opt/python/*/bin/)
-for PYBIN in $PYBINS; do
+for PYBIN in /opt/python/*/bin/; do
     if [[ ${PYBIN} =~ 26|33 ]]; then
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
@@ -32,11 +31,12 @@ for PYBIN in $PYBINS; do
     # get overwritten
     (cd /io/; "${PYBIN}/coverage" run --source=dwave_sage -a -m unittest discover)
     (cd /io/; "${PYBIN}/python" -m unittest discover)
+
+    LASTPYBIN=$PYBIN
 done
 
 # install coveralls for the last version of python and submit 
 # using that version
-LASTPYBIN=${PYBINS[@]: -1:1}
 "${LASTPYBIN}/pip" install coveralls
 
 # submit coverage results to coveralls
