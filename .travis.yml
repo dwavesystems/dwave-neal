@@ -29,7 +29,7 @@ script:
   - ls wheelhouse/
 
 after_success:
-  - coveralls
+  - coveralls debug
 
 deploy:
   provider: script
