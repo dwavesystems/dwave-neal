@@ -27,8 +27,8 @@ for PYBIN in /opt/python/*/bin/; do
         continue
     fi
     "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/
-    (cd "/io/dwave_sage"; "${PYBIN}/python" -m unittest discover)
     # -a option on coverage run just appends to the same file so it doesn't
     # get overwritten
     "${PYBIN}/coverage" run --source=dwave_sage -a -m unittest discover
+    "${PYBIN}/python" -m unittest discover
 done
