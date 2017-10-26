@@ -28,5 +28,5 @@ for PYBIN in /opt/python/*/bin/; do
     fi
     "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/
     (cd "/io/dwave_sage"; "${PYBIN}/python" -m unittest discover)
-    "${PYBIN}/coverage" run --source=dwave_sage -m unittest discover
+    (cd "/io/dwave_sage"; "${PYBIN}/coverage" run -m unittest discover)
 done
