@@ -29,7 +29,7 @@ script:
   - ls wheelhouse/
 
 after_success:
-  - coveralls -b dwave_sage
+  - cd dwave_sage && coveralls
 
 deploy:
   provider: script
