@@ -1,5 +1,6 @@
-from dwave_sage_dimod import *
-from dwave_sage_dimod.dimod_general_sa import *
+from __future__ import absolute_import
+
+from dwave_sage.dwave_sage_dimod import *
 
 __version__ = "0.1.1"
 __author__ = "D-Wave Systems Inc."
