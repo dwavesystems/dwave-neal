@@ -14,6 +14,8 @@ else:
     itervalues = lambda d: d.values()
     iteritems = lambda d: d.items()
 
+__all__ = ["DWaveSAGeSampler"]
+
 class DWaveSAGeSampler(TemplateSampler):
     @ising(1, 2)
     def sample_ising(self, h, J, beta_range=None, num_samples=10, sweeps=1000,
