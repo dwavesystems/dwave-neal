@@ -64,5 +64,29 @@ class TestSA(unittest.TestCase):
         self.assertAlmostEqual(ground_energy, mean_energy, delta=2,
                 msg="Sampler returned poor mean energy for easy problem")
 
+    def test_seed(self):
+        # no need to do a bunch of sweeps, in fact the less we do the more
+        # sure we can be that the same seed is returning the same result
+        problem = self._sample_fm_problem(num_variables=40, num_samples=1000,
+                num_sweeps=10)
+
+        # no need to do a bunch of sweeps, in fact the less we do the more
+        # sure we can be that the same seed is returning the same result
+
+        previous_samples = []
+        for seed in (1, 40, 235, 152436, 3462354, 92352355):
+            seeded_problem = problem[:-1] + (seed,)
+            samples0, _ = dwave_sage_sampler.simulated_annealing(*seeded_problem)
+            samples1, _ = dwave_sage_sampler.simulated_annealing(*seeded_problem)
+
+            self.assertTrue(np.array_equal(samples0, samples1),
+                    "Same seed returned different results")
+
+            for previous_sample in previous_samples:
+                self.assertFalse(np.array_equal(samples0, previous_sample),
+                    "Different seed returned same results")
+
+            previous_samples.append(samples0)
+
 if __name__ == "__main__":
     unittest.main()
