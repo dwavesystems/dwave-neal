@@ -10,9 +10,11 @@ if sys.version_info[0] == 2:
     range = xrange
     itervalues = lambda d: d.itervalues()
     iteritems = lambda d: d.iteritems()
+    int_types = (int, long)
 else:
     itervalues = lambda d: d.values()
     iteritems = lambda d: d.items()
+    int_types = (int,)
 
 __all__ = ["DWaveSAGeSampler"]
 
@@ -76,9 +78,9 @@ class DWaveSAGeSampler(TemplateSampler):
             raise TypeError("'samples' should be a positive integer")
         if num_samples < 1:
             raise ValueError("'samples' should be a positive integer")
-        if not isinstance(seed, (type(None), int)):
+        if not (seed is None or isinstance(seed, int_types)):
             raise TypeError("'seed' should be None or a positive integer")
-        if isinstance(seed, int) and (not 0 < seed < (1<<64 - 1)):
+        if isinstance(seed, int_types) and not (0 < seed < (2**64 - 1)):
             error_msg = "'seed' should be an integer between 0 and 2^64 - 1"
             raise ValueError(error_msg)
 
@@ -110,7 +112,7 @@ class DWaveSAGeSampler(TemplateSampler):
                 beta_range.append(1)
 
         # interpolate a linear beta schedule
-        beta_step = (beta_range[1] - beta_range[0]) / sweeps
+        beta_step = (beta_range[1] - beta_range[0]) / float(sweeps)
         beta_schedule = [beta_range[0]+s*beta_step for s in range(sweeps)]
 
         if seed is None:
