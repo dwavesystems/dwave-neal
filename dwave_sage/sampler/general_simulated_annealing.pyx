@@ -63,6 +63,13 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     num_vars = len(h)
 
+    # in the case that we either need no samples or there are no variables,
+    # we can safely return an empty array (and set energies to 0)
+    if num_samples*num_vars == 0:
+        annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
+        return annealed_states, np.zeros(num_samples, dtype=np.double)
+
+
     cdef np.ndarray[char, ndim=1, mode="c"] states_numpy = \
             np.empty(num_samples*num_vars, dtype="b")
     cdef char* states = &states_numpy[0]
