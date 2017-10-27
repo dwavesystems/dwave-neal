@@ -1,7 +1,7 @@
 import sys
 from random import randint
 
-from dimod import TemplateSampler, SpinResponse
+from dimod import TemplateSampler, NumpySpinResponse
 from dimod.decorators import ising
 
 from dwave_sage_sampler import simulated_annealing
@@ -88,9 +88,12 @@ class DWaveSAGeSampler(TemplateSampler):
             var_map[var] = new_var_index
             vector_h.append(weight)
         
-        couplers, coupler_weights = zip(*iteritems(J))
-        couplers = map(lambda c: (var_map[c[0]], var_map[c[1]]), couplers)
-        coupler_starts, coupler_ends = zip(*couplers)
+        if len(J) > 0:
+            couplers, coupler_weights = zip(*iteritems(J))
+            couplers = map(lambda c: (var_map[c[0]], var_map[c[1]]), couplers)
+            coupler_starts, coupler_ends = zip(*couplers)
+        else:
+            coupler_starts, coupler_ends, coupler_weights = [], [], []
 
         if beta_range is None:
             beta_range = [.1]
@@ -100,7 +103,11 @@ class DWaveSAGeSampler(TemplateSampler):
                 sigmas[u] += abs(J[(u, v)])
                 sigmas[v] += abs(J[(u, v)])
 
-            beta_range.append(2 * max(itervalues(sigmas)))
+            if len(sigmas) > 0:
+                beta_range.append(2 * max(itervalues(sigmas)))
+            else:
+                # completely empty problem, so beta_range doesn't matter
+                beta_range.append(1)
 
         # interpolate a linear beta schedule
         beta_step = (beta_range[1] - beta_range[0]) / sweeps
@@ -116,13 +123,13 @@ class DWaveSAGeSampler(TemplateSampler):
                                                 coupler_weights, beta_schedule,
                                                 seed)
 
-        samples = [{var: int(sample[i]) for var,i in iteritems(var_map)}
-                        for sample in samples]
-        energies = list(energies)
+        # samples is now a 2d array with samples as row, exactly as 
+        # dimod.NumpySpinResponse expects
 
-        # create the response object. Ising returns spin values.
-        response = SpinResponse()
-        # add the samples and energies to the response object
-        response.add_samples_from(samples, energies)
+        # create the response object
+        response = NumpySpinResponse()
+
+        # add the samples and corresponding energies
+        response.add_samples_from_array(samples, energies)
 
         return response
