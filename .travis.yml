@@ -31,9 +31,7 @@ script:
 after_success:
   - pip install dwave_sage --no-index -f wheelhouse/
   - coverage run --source=dwave_sage -m unittest discover
-  - ls -al
   - coveralls
-
 
 deploy:
   provider: script
