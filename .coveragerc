@@ -21,3 +21,5 @@ exclude_lines:
     zip = itertools.izip
     itervalues = lambda d: d.itervalues()
     itervalues = lambda d: d.values()
+    int_types = \(int, long\)
+    int_types = \(int,\)
