@@ -29,7 +29,8 @@ script:
   - ls wheelhouse/
 
 after_success:
-  - pip install -r requirements.txt dwave_sage --no-index -f wheelhouse/
+  - pip install -r requirements.txt
+  - pip install dwave_sage --no-index -f wheelhouse/
   - coverage run --source=dwave_sage -m unittest discover
   - coveralls
 
