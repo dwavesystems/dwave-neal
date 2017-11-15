@@ -136,4 +136,4 @@ class NealSampler(TemplateSampler):
 
         return response
 
-    Neal = NealSampler
+Neal = NealSampler
