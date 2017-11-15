@@ -14,7 +14,7 @@ done
 
 # Bundle external shared libraries into the wheels
 for whl in wheelhouse/*.whl; do
-    if ! [[ "$whl" =~ dwave_sage ]]; then
+    if ! [[ "$whl" =~ dwave_neal ]]; then
         continue
     fi
     auditwheel repair "$whl" -w /io/wheelhouse/
@@ -26,7 +26,7 @@ for PYBIN in /opt/python/*/bin/; do
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
     fi
-    "${PYBIN}/pip" install dwave_sage --no-index -f /io/wheelhouse/
+    "${PYBIN}/pip" install dwave_neal --no-index -f /io/wheelhouse/
     # -a option on coverage run just appends to the same file so it doesn't
     # get overwritten
     (cd /io/; "${PYBIN}/python" -m unittest discover)

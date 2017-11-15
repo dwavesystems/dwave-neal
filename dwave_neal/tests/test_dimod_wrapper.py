@@ -3,7 +3,7 @@ import numpy as np
 import copy
 
 import dimod
-from dwave_sage import DWaveSAGeSampler
+from dwave_neal import Neal
 
 class TestDimodWrapper(unittest.TestCase):
     def _get_simple_h_J(self):
@@ -21,7 +21,7 @@ class TestDimodWrapper(unittest.TestCase):
         return -np.sum(p*np.log(p))
 
     def test_basic_response(self):
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         h, J = self._get_simple_h_J()
         response = sampler.sample_ising(h, J)
 
@@ -29,7 +29,7 @@ class TestDimodWrapper(unittest.TestCase):
                 "Sampler returned an unexpected response type")
 
     def test_num_samples(self):
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         h, J = self._get_simple_h_J()
         for num_samples in (1, 10, 100, 3223, 10352):
             response = sampler.sample_ising(h, J, num_samples=num_samples)
@@ -45,7 +45,7 @@ class TestDimodWrapper(unittest.TestCase):
                     num_samples=bad_num_samples)
 
     def test_empty_problem(self):
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         nh, nJ = self._get_simple_h_J()
         eh, eJ = {}, {}
         
@@ -58,7 +58,7 @@ class TestDimodWrapper(unittest.TestCase):
 
     def test_beta_range(self):
         """Tests at a very low beta, should be close to random results"""
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         h, J = self._get_connected_FM_h_J(15)
         beta_range = (0.00001, 0.00002) # very low beta
         num_samples = 1000
@@ -77,7 +77,7 @@ class TestDimodWrapper(unittest.TestCase):
                      "issue with the PRNG").format(entropy))
 
     def test_seed(self):
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         num_vars = 40
         h, J = self._get_connected_FM_h_J(num_vars)
         num_samples = 1000
@@ -116,7 +116,7 @@ class TestDimodWrapper(unittest.TestCase):
             all_samples.append(samples0)
 
     def test_disconnected_problem(self):
-        sampler = DWaveSAGeSampler()
+        sampler = Neal()
         h = {}
         J = {
                 # K_3

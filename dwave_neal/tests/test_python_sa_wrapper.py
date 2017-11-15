@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-import dwave_sage_sampler
+import dwave_neal_sampler
 
 class TestSA(unittest.TestCase):
     def _sample_fm_problem(self, num_variables=10, num_samples=100, 
@@ -23,7 +23,7 @@ class TestSA(unittest.TestCase):
         problem = self._sample_fm_problem(num_variables=num_variables,
                                           num_samples=num_samples)
 
-        result = dwave_sage_sampler.simulated_annealing(*problem)
+        result = dwave_neal_sampler.simulated_annealing(*problem)
 
         self.assertTrue(len(result) == 2,
                 "Sampler should return two values")
@@ -51,7 +51,7 @@ class TestSA(unittest.TestCase):
         num_variables = 5
         problem = self._sample_fm_problem(num_variables=num_variables)
         
-        samples, energies = dwave_sage_sampler.simulated_annealing(*problem)
+        samples, energies = dwave_neal_sampler.simulated_annealing(*problem)
 
         ground_state = [1]*num_variables
         ground_energy = -(num_variables+3)*num_variables/2
@@ -76,8 +76,8 @@ class TestSA(unittest.TestCase):
         previous_samples = []
         for seed in (1, 40, 235, 152436, 3462354, 92352355):
             seeded_problem = problem[:-1] + (seed,)
-            samples0, _ = dwave_sage_sampler.simulated_annealing(*seeded_problem)
-            samples1, _ = dwave_sage_sampler.simulated_annealing(*seeded_problem)
+            samples0, _ = dwave_neal_sampler.simulated_annealing(*seeded_problem)
+            samples1, _ = dwave_neal_sampler.simulated_annealing(*seeded_problem)
 
             self.assertTrue(np.array_equal(samples0, samples1),
                     "Same seed returned different results")

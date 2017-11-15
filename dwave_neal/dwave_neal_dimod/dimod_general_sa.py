@@ -4,7 +4,7 @@ from random import randint
 from dimod import TemplateSampler, NumpySpinResponse
 from dimod.decorators import ising
 
-from dwave_sage_sampler import simulated_annealing
+from dwave_neal_sampler import simulated_annealing
 
 if sys.version_info[0] == 2:
     range = xrange
@@ -16,9 +16,9 @@ else:
     iteritems = lambda d: d.items()
     int_types = (int,)
 
-__all__ = ["DWaveSAGeSampler"]
+__all__ = ["Neal"]
 
-class DWaveSAGeSampler(TemplateSampler):
+class Neal(TemplateSampler):
     @ising(1, 2)
     def sample_ising(self, h, J, beta_range=None, num_samples=10, sweeps=1000,
                      seed=None):

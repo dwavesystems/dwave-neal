@@ -2,7 +2,7 @@
 Sampler Interface
 *****************
 
-.. automodule:: dwave_sage
+.. automodule:: dwave_neal
 
-.. autoclass:: DWaveSAGeSampler
+.. autoclass:: Neal
    :members: sample_ising, sample_qubo

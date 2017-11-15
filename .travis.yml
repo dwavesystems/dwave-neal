@@ -30,8 +30,8 @@ script:
 
 after_success:
   - pip install -r requirements.txt
-  - pip install dwave_sage --no-index -f wheelhouse/
-  - coverage run --source=dwave_sage -m unittest discover
+  - pip install dwave_neal --no-index -f wheelhouse/
+  - coverage run --source=dwave_neal -m unittest discover
   - coveralls
 
 deploy:

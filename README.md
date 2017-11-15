@@ -1,34 +1,29 @@
-# dwave_SAGE
-
-[![Build Status](https://travis-ci.org/dwavesystems/dwave_SAGE.svg?branch=master)](https://travis-ci.org/dwavesystems/dwave_SAGE)
-[![Build status](https://ci.appveyor.com/api/projects/status/ip1j34wt9s9xsvnm?svg=true)](https://ci.appveyor.com/project/wbernoudy/dwave-sage)
-[![Documentation Status](https://readthedocs.org/projects/dwave-sage/badge/?version=latest)](http://dwave-sage.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/dwavesystems/dwave_SAGE/badge.svg?branch=master)](https://coveralls.io/github/dwavesystems/dwave_SAGE?branch=master)
+# dwave_neal
 
 An implementation of a simulated annealing sampler for general Ising model graphs in C++ with a [dimod][1] Python wrapper.
 
-For documentation, see <http://dwave-sage.readthedocs.io/en/latest/>.
+For documentation, see <http://dwave-neal.readthedocs.io/en/latest/>.
 
 ## Installation
 
 To install from PyPI:
 
 ```bash
-$ pip install dwave_sage
+$ pip install dwave_neal
 ```
 
 To install from this repo, buliding the C++ from source:
 
 ```bash
-$ git clone https://github.com/dwavesystems/dwave_SAGE.git
-$ cd dwave_SAGE
+$ git clone https://github.com/dwavesystems/dwave_neal.git
+$ cd dwave_neal
 $ pip install -r requirements.txt .
 ```
 
 ## Usage
 ```python
->>> from dwave_sage import DWaveSAGeSampler
->>> sampler = DWaveSAGeSampler()
+>>> from dwave_neal import Neal
+>>> sampler = Neal()
 ```
 
 `sampler` shares the sampler API from [dimod][1] and can be used accordingly.

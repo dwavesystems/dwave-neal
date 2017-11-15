@@ -3,14 +3,14 @@ from Cython.Distutils import build_ext
 import platform
 import numpy
 
-src_folder = "dwave_sage/"
+src_folder = "dwave_neal/"
 
 cpp_version_arg = "-std=c++11" # default, works on linux
 
 if platform.system().lower() == "windows":
     cpp_version_arg = "/std:c++14"
 
-ext_module = Extension("dwave_sage_sampler", 
+ext_module = Extension("dwave_neal_sampler", 
         [src_folder + "sampler/" + "general_simulated_annealing.pyx", 
             src_folder + "sampler/" + "cpu_sa.cpp"], 
         language="c++",
@@ -19,7 +19,7 @@ ext_module = Extension("dwave_sage_sampler",
         include_dirs=[numpy.get_include()]
         )
 
-setup(name="dwave_sage",
+setup(name="dwave_neal",
       version="0.1.1",
       description="General Ising graph simulated annealing solver",
       author="William Bernoudy",
@@ -27,8 +27,8 @@ setup(name="dwave_sage",
       license="Apache 2.0",
       cmdclass = {"build_ext": build_ext}, 
       ext_modules = [ext_module],
-      packages=["dwave_sage"],
-      package_dir={"dwave_sage": src_folder + "dwave_sage_dimod"},
+      packages=["dwave_neal"],
+      package_dir={"dwave_neal": src_folder + "dwave_neal_dimod"},
       install_requires=[
           "numpy",
           "dimod",

@@ -5,7 +5,7 @@
 Overview
 ========
 
-dwave_SAGE is an implementation of a simulated annealing sampler for general Ising model graphs in C++ with a dimod Python wrapper.
+dwave_neal is an implementation of a simulated annealing sampler for general Ising model graphs in C++ with a dimod Python wrapper.
 
 Documentation
 -------------

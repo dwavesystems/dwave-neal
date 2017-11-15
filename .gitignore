@@ -1,8 +1,9 @@
 *.pyc
 build
 dist
-dwave_sage.egg-info
+dwave_neal.egg-info
 general_simulated_annealing.cpp
 .pypirc
 .coverage
 htmlcov
+*.so
