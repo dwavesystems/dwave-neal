@@ -16,9 +16,9 @@ else:
     iteritems = lambda d: d.items()
     int_types = (int,)
 
-__all__ = ["Neal"]
+__all__ = ["Neal", "NealSampler"]
 
-class Neal(TemplateSampler):
+class NealSampler(TemplateSampler):
     @ising(1, 2)
     def sample_ising(self, h, J, beta_range=None, num_samples=10, sweeps=1000,
                      seed=None):
@@ -135,3 +135,5 @@ class Neal(TemplateSampler):
         response.add_samples_from_array(samples, energies)
 
         return response
+
+Neal = NealSampler
