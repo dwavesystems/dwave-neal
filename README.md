@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/dwavesystems/dwave_neal.svg?branch=master)](https://travis-ci.org/dwavesystems/dwave_neal)
 [![Build status](https://ci.appveyor.com/api/projects/status/ip1j34wt9s9xsvnm?svg=true)](https://ci.appveyor.com/project/wbernoudy/dwave-sage)
 [![Coverage Status](https://coveralls.io/repos/github/dwavesystems/dwave_neal/badge.svg?branch=master)](https://coveralls.io/github/dwavesystems/dwave_neal?branch=master)
+[![Documentation Status](http://readthedocs.org/projects/dwave-neal/badge/?version=latest)](http://dwave-neal.readthedocs.io/en/latest/?badge=latest)
 
 An implementation of a simulated annealing sampler for general Ising model graphs in C++ with a [dimod][1] Python wrapper.
 
