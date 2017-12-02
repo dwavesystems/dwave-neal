@@ -16,6 +16,7 @@ void simulated_annealing_run(char *state, std::vector<double> & h,
                      std::vector<int> & degrees, 
                      std::vector<std::vector<int>> & neighbors, 
                      std::vector<std::vector<double>> & neighbour_couplings,
+                     int sweeps_per_beta,
                      std::vector<double> beta_schedule);
 
 double get_state_energy(char *state, std::vector<double> h, 
@@ -29,6 +30,7 @@ std::vector<double> general_simulated_annealing(char *states,
                                           std::vector<int> coupler_starts, 
                                           std::vector<int> coupler_ends, 
                                           std::vector<double> coupler_values,
+                                          int sweeps_per_beta,
                                           std::vector<double> beta_schedule,
                                           uint64_t seed);
 
