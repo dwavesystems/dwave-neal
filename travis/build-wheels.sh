@@ -2,7 +2,7 @@
 set -e -x
 
 for PYBIN in /opt/python/*/bin; do
-    if [[ ${PYBIN} =~ 26|33 ]]; then
+    if [[ ${PYBIN} =~ 2.6|3.3 ]]; then
         # numpy doesn't support 2.6 or 3.3, just skip em
         continue
     fi
