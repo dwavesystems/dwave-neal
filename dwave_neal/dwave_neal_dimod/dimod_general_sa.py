@@ -1,5 +1,7 @@
+from __future__ import division
 import sys
 from random import randint
+import math
 
 from dimod import TemplateSampler, NumpySpinResponse
 from dimod.decorators import ising
@@ -21,7 +23,7 @@ __all__ = ["Neal", "NealSampler"]
 class NealSampler(TemplateSampler):
     @ising(1, 2)
     def sample_ising(self, h, J, beta_range=None, num_samples=10, sweeps=1000,
-                     seed=None):
+                     beta_schedule_type="linear", seed=None):
         """
         Sample from low-energy spin states using simulated annealing 
         sampler written in C++.
@@ -111,9 +113,20 @@ class NealSampler(TemplateSampler):
                 # completely empty problem, so beta_range doesn't matter
                 beta_range.append(1)
 
-        # interpolate a linear beta schedule
-        beta_step = (beta_range[1] - beta_range[0]) / float(sweeps)
-        beta_schedule = [beta_range[0]+s*beta_step for s in range(sweeps)]
+        sweeps_per_beta = max(1, sweeps//1000.0)
+        num_betas = math.ceil(sweeps/sweeps_per_beta)
+        if beta_schedule_type == "linear":
+            # interpolate a linear beta schedule
+            beta_step = (beta_range[1] - beta_range[0]) / float(num_betas)
+            beta_schedule = [beta_range[0]+s*beta_step 
+                                for s in range(num_betas)]
+        elif beta_schedule_type == "geometric":
+            beta_step = (beta_range[1]/beta_range[0])**(1.0/num_betas)
+            beta_schedule = [beta_range[0]*beta_step**i 
+                                for i in range(num_betas)]
+        else:
+            raise NotImplementedError("Beta schedule type {} not implemented"
+                    .format(beta_schedule_type))
 
         if seed is None:
             # pick a random seed
@@ -122,7 +135,8 @@ class NealSampler(TemplateSampler):
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(num_samples, vector_h,
                                                 coupler_starts, coupler_ends,
-                                                coupler_weights, beta_schedule,
+                                                coupler_weights, 
+                                                sweeps_per_beta, beta_schedule,
                                                 seed)
 
         # samples is now a 2d array with samples as row, exactly as 
