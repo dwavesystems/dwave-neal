@@ -6,9 +6,6 @@ import dimod
 from dwave_neal import Neal
 
 class TestDimodWrapper(unittest.TestCase):
-    def test_fail(self):
-        self.assertTrue(False)
-
     def _get_simple_h_J(self):
         return {0: -1, 1: -1}, {(0, 1): -1}
 
