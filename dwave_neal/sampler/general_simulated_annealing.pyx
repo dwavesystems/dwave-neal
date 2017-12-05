@@ -2,6 +2,8 @@ from libcpp.vector cimport vector
 cimport numpy as np
 import numpy as np
 
+__all__ = ["simulated_annealing"]
+
 """Cython wrapper for C++ simulated annealing solver"""
 
 cdef extern from "cpu_sa.h":
