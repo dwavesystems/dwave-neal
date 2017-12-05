@@ -114,7 +114,7 @@ class NealSampler(TemplateSampler):
                 beta_range.append(1)
 
         sweeps_per_beta = max(1, sweeps//1000.0)
-        num_betas = math.ceil(sweeps/sweeps_per_beta)
+        num_betas = int(math.ceil(sweeps/sweeps_per_beta))
         if beta_schedule_type == "linear":
             # interpolate a linear beta schedule
             beta_step = (beta_range[1] - beta_range[0]) / float(num_betas)

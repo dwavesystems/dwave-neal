@@ -27,7 +27,5 @@ for PYBIN in /opt/python/*/bin/; do
         continue
     fi
     "${PYBIN}/pip" install dwave_neal --no-index -f /io/wheelhouse/
-    # -a option on coverage run just appends to the same file so it doesn't
-    # get overwritten
-    (cd /io/; "${PYBIN}/python" -m unittest discover)
+    (set -x; cd /io/; "${PYBIN}/python" -m unittest discover)
 done
