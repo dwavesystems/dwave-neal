@@ -27,5 +27,5 @@ for PYBIN in /opt/python/*/bin/; do
         continue
     fi
     "${PYBIN}/pip" install dwave_neal --no-index -f /io/wheelhouse/
-    (set -x; cd /io/; "${PYBIN}/python" -m unittest discover)
+    (set -e; cd /io/; "${PYBIN}/python" -m unittest discover)
 done
