@@ -20,7 +20,7 @@ ext_module = Extension("dwave_neal_sampler",
         )
 
 setup(name="dwave_neal",
-      version="0.1.1",
+      version="0.2.0",
       description="General Ising graph simulated annealing solver",
       author="William Bernoudy",
       author_email="wbernoudy@dwavesys.com",
