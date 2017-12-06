@@ -2,8 +2,8 @@
 set -e -x
 
 for PYBIN in /opt/python/*/bin; do
-    if [[ ${PYBIN} =~ 26|33 ]]; then
-        # numpy doesn't support 2.6 or 3.3, just skip em
+    if [[ ${PYBIN} =~ 26|2.6|33|3.3 ]]; then
+        # numpy doesn't support 2.6 or 3.3, just skip them
         continue
     fi
     "${PYBIN}/pip" install -r /io/requirements.txt
@@ -21,13 +21,12 @@ for whl in wheelhouse/*.whl; do
 done
 
 # Install packages and test
+cd /io/
 for PYBIN in /opt/python/*/bin/; do
-    if [[ ${PYBIN} =~ 26|33 ]]; then
-        # numpy doesn't support 2.6 or 3.3, just skip em
+    if [[ ${PYBIN} =~ 26|2.6|33|3.3 ]]; then
+        # numpy doesn't support 2.6 or 3.3, just skip them
         continue
     fi
     "${PYBIN}/pip" install dwave_neal --no-index -f /io/wheelhouse/
-    # -a option on coverage run just appends to the same file so it doesn't
-    # get overwritten
-    (cd /io/; "${PYBIN}/python" -m unittest discover)
+    "${PYBIN}/python" -m unittest discover
 done

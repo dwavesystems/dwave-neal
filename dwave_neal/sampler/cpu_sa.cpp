@@ -69,17 +69,20 @@ double get_flip_energy(int var, char *state, vector<double> & h,
  * @param neighbour_couplings same as neighbors, but instead has the J value.
  *        neighbour_couplings[i][j] is the J value or weight on the coupling
  *        between variables i and neighbors[i][j]. 
- * @param beta_schedule A list of the beta values to run each sweep at. The
- *        size of `beta_schedule` is the number of sweeps to perform.
+ * @param sweeps_per_beta The number of sweeps to perform at each beta value.
+ *        Total number of sweeps is `sweeps_per_beta` * length of
+ *        `beta_schedule`.
+ * @param beta_schedule A list of the beta values to run `sweeps_per_beta`
+ *        sweeps at.
  * @return Nothing, but `state` now contains the result of the run.
  */
 void simulated_annealing_run(char* state, vector<double>& h, 
                                vector<int>& degrees, 
                                vector<vector<int>>& neighbors, 
                                vector<vector<double>>& neighbour_couplings,
+                               int sweeps_per_beta,
                                vector<double> beta_schedule) {
     const int num_vars = h.size();
-    const int num_sweeps = beta_schedule.size();
 
     // this double array will hold the delta energy for every variable
     // delta_energy[v] is the delta energy for variable `v`
@@ -107,60 +110,63 @@ void simulated_annealing_run(char* state, vector<double>& h,
 
     bool flip_spin;
     // perform the sweeps
-    for (int sweep = 0; sweep < num_sweeps; sweep++) {
+    for (int beta_idx = 0; beta_idx < (int)beta_schedule.size(); beta_idx++) {
         // get the beta value for this sweep
-        const double beta = beta_schedule[sweep];
+        const double beta = beta_schedule[beta_idx];
+        for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
-        // this threshold will allow us to skip the metropolis update for
-        // variables that have an extremely low chance of getting flipped
-        const double threshold = 23 / beta;
+            // this threshold will allow us to skip the metropolis update for
+            // variables that have an extremely low chance of getting flipped
+            const double threshold = 23 / beta;
 
-        for (int var = 0; var < num_vars; var++) {
-            // if the delta_energy for the variable is greater than
-            // `threshold`, then we know exp(-delta energy * beta) < 1.1e-10,
-            // (because exp(`threshold` * beta) = exp(-23) = 1.026e-10)
-            // meaning there is less than 1 in 10 billion chance that the spin
-            // will be accepted. in other words, we can safely ignore it.
-            if (delta_energy[var] >= threshold) continue;
+            for (int var = 0; var < num_vars; var++) {
+                // if the delta_energy for the variable is greater than
+                // `threshold`, then we know exp(-delta energy*beta) < 1.1e-10,
+                // (because exp(`threshold` * beta) = exp(-23) = 1.026e-10)
+                // meaning there is less than 1 in 1e9 chance that the spin
+                // will be accepted. in other words, we can safely ignore it.
+                if (delta_energy[var] >= threshold) continue;
 
-            flip_spin = false;
+                flip_spin = false;
 
-            if (delta_energy[var] <= 0.0) {
-                // automatically accept any flip that results in a lower energy
-                flip_spin = true;
-            }
-            else {
-                // get a random number, storing it in rand
-                FASTRAND(rand); 
-                // accept the flip if exp(delta energy * beta) > random(0, 1)
-                if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                if (delta_energy[var] <= 0.0) {
+                    // automatically accept any flip that results in a lower 
+                    // energy
                     flip_spin = true;
                 }
-            }
-
-            if (flip_spin) {
-                // since we have accepted the spin flip of variable `var`, we
-                // need to adjust the delta energies of all the neighboring
-                // variables
-                const char multiplier = 4 * state[var];
-                // iterate over the neighbors of `var`
-                for (int n_i = 0; n_i < degrees[var]; n_i++) {
-                    int neighbor = neighbors[var][n_i];
-                    // adjust the delta energy by 
-                    // 4 * `var` state * coupler weight * neighbor state.
-                    // the 4 is because the original contribution from `var`
-                    // to the neighbor's delta energy was
-                    // 2 * `var` state * coupler weight * neighbor state,
-                    // so since we are flipping `var`'s state, we need to 
-                    // multiply it again by 2 to get the full offset.
-                    delta_energy[neighbor] += multiplier * 
-                        neighbour_couplings[var][n_i] * state[neighbor];
+                else {
+                    // get a random number, storing it in rand
+                    FASTRAND(rand); 
+                    // accept the flip if exp(delta_energy*beta) > random(0, 1)
+                    if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                        flip_spin = true;
+                    }
                 }
 
-                // now we just need to flip its state and negate its delta 
-                // energy
-                state[var] *= -1;
-                delta_energy[var] *= -1;
+                if (flip_spin) {
+                    // since we have accepted the spin flip of variable `var`, 
+                    // we need to adjust the delta energies of all the 
+                    // neighboring variables
+                    const char multiplier = 4 * state[var];
+                    // iterate over the neighbors of `var`
+                    for (int n_i = 0; n_i < degrees[var]; n_i++) {
+                        int neighbor = neighbors[var][n_i];
+                        // adjust the delta energy by 
+                        // 4 * `var` state * coupler weight * neighbor state
+                        // the 4 is because the original contribution from 
+                        // `var` to the neighbor's delta energy was
+                        // 2 * `var` state * coupler weight * neighbor state,
+                        // so since we are flipping `var`'s state, we need to 
+                        // multiply it again by 2 to get the full offset.
+                        delta_energy[neighbor] += multiplier * 
+                            neighbour_couplings[var][n_i] * state[neighbor];
+                    }
+
+                    // now we just need to flip its state and negate its delta 
+                    // energy
+                    state[var] *= -1;
+                    delta_energy[var] *= -1;
+                }
             }
         }
     }
@@ -210,8 +216,11 @@ double get_state_energy(char* state, vector<double> h,
  *        of each coupler in the problem
  * @param coupler_weights a double vector containing the weights of the couplers
  *        in the same order as coupler_starts and coupler_ends
- * @param beta_schedule a double vector containing the beta schedule. the size
- *        of the vector is the number of sweeps that will be performed.
+ * @param sweeps_per_beta The number of sweeps to perform at each beta value.
+ *        Total number of sweeps is `sweeps_per_beta` * length of
+ *        `beta_schedule`.
+ * @param beta_schedule A list of the beta values to run `sweeps_per_beta`
+ *        sweeps at.
  * @return A double vector containing the energies of all the states that were
  *         written to `states`.
  */
@@ -220,6 +229,7 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
                                            vector<int> coupler_starts, 
                                            vector<int> coupler_ends, 
                                            vector<double> coupler_weights,
+                                           int sweeps_per_beta,
                                            vector<double> beta_schedule,
                                            uint64_t seed) {
 
@@ -285,7 +295,8 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
         // then do the actual sample. this function will modify state, storing
         // the sample there
         simulated_annealing_run(state, h, degrees, 
-                                neighbors, neighbour_couplings, beta_schedule);
+                                neighbors, neighbour_couplings, 
+                                sweeps_per_beta, beta_schedule);
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
                                          coupler_ends, coupler_weights);

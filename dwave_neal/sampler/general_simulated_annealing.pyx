@@ -2,6 +2,8 @@ from libcpp.vector cimport vector
 cimport numpy as np
 import numpy as np
 
+__all__ = ["simulated_annealing"]
+
 """Cython wrapper for C++ simulated annealing solver"""
 
 cdef extern from "cpu_sa.h":
@@ -12,11 +14,12 @@ cdef extern from "cpu_sa.h":
             vector[int] &, # coupler starts
             vector[int] &, # coupler ends
             vector[double] &, # coupler weights
+            int, # sweeps per beta
             vector[double] &, # beta schedule
             unsigned long long) # seed
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends, 
-                        coupler_weights, beta_schedule, seed):
+                        coupler_weights, sweeps_per_beta, beta_schedule, seed):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -43,10 +46,13 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         A list of the J values or weight on each coupler, in the same
         order as `coupler_starts` and `coupler_ends`.
 
+    sweeps_per_beta : int
+        The number of sweeps to perform at each beta value provided in 
+        `beta_schedule`. The total number of sweeps per sample is 
+        sweeps_per_beta * len(beta_schedule).
+
     beta_schedule : list(float)
-        A list of the different beta values to run each sweep at. The
-        length of `beta_schedule` is equal to the number of sweeps
-        that are performed to get every sample.
+        A list of the different beta values to run sweeps at. 
 
     seed : 64 bit int > 0
         The seed to use for the PRNG. Must be a positive integer
@@ -76,7 +82,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     
     energies = general_simulated_annealing(states, num_samples, h, 
                                            coupler_starts, coupler_ends, 
-                                           coupler_weights, beta_schedule, 
+                                           coupler_weights, 
+                                           sweeps_per_beta, beta_schedule, 
                                            seed)
 
     annealed_states = states_numpy.reshape((num_samples, num_vars))

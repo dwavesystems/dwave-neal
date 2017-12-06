@@ -13,10 +13,11 @@ class TestSA(unittest.TestCase):
                     for v in range(u, num_variables)))
         
         beta_schedule = np.linspace(0.01, 3, num=num_sweeps)
+        sweeps_at_beta = 1
         seed = 1
 
-        return (num_samples, h, coupler_starts, coupler_ends, coupler_weights,
-                beta_schedule, seed)
+        return (num_samples, h, coupler_starts, coupler_ends, coupler_weights, 
+                sweeps_at_beta, beta_schedule, seed)
 
     def test_submit_problem(self):
         num_variables, num_samples = 10, 100
