@@ -34,6 +34,7 @@ jobs:
       - run: &install-package-template
           name: install package
           command: |
+            . env/bin/activate
             pip install .
         
       - run: &run-tests-template
