@@ -3,8 +3,6 @@ from setuptools.command.build_ext import build_ext
 import sys
 import os
 
-import numpy as np
-
 cwd = os.path.abspath(os.path.dirname(__file__))
 if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
     try:
@@ -40,39 +38,49 @@ class build_ext_compiler_check(build_ext):
 
         build_ext.build_extensions(self)
 
+    def run(self):
+        import numpy
+
+        self.include_dirs.append(numpy.get_include())
+
+        build_ext.run(self)
+
 
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
 
 extensions = [Extension(
-    name="dwave_neal_sampler",
-    sources=["./dwave_neal/sampler/general_simulated_annealing" + ext],
-    include_dirs=[np.get_include()],
+    name='neal.src.simulated_annealing',
+    sources=['./neal/src/simulated_annealing' + ext,
+             './neal/src/cpu_sa.cpp',
+             ],
+    include_dirs=['./neal/src/'],
     language='c++',
 )]
 
 if USE_CYTHON:
     extensions = cythonize(extensions, language='c++')
 
-packages = ['dwave_neal',
-            'dwave_neal_dimod',
+packages = ['neal',
+            'neal/src'
             ]
 
 install_requires = ['dimod==0.3.1',
-                    'numpy==1.13.0',
+                    'numpy>=1.14.0,<1.15.0',
+                    'six>=1.11.0,<2.0.0'
                     ]
 
 _PY2 = sys.version_info.major == 2
 
 # add __version__, __author__, __authoremail__, __description__ to this namespace
 if _PY2:
-    execfile("./dwave_neal/package_info.py")
+    execfile("./neal/package_info.py")
 else:
-    exec(open("./dwave_neal/package_info.py").read())
+    exec(open("./neal/package_info.py").read())
 
 
 setup(
-    name='dwave_neal',
+    name='neal',
     version=__version__,
     author=__author__,
     author_email=__authoremail__,
@@ -83,5 +91,6 @@ setup(
     packages=packages,
     install_requires=install_requires,
     ext_modules=extensions,
-    cmdclass={'build_ext': build_ext_compiler_check}
+    cmdclass={'build_ext': build_ext_compiler_check},
+    zip_safe=False
 )

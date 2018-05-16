@@ -1,24 +1,11 @@
-from libcpp.vector cimport vector
-cimport numpy as np
+# distutils: language = c++
 import numpy as np
+cimport numpy as np
 
-__all__ = ["simulated_annealing"]
+cimport cython_cpu_sa as sa
 
-"""Cython wrapper for C++ simulated annealing solver"""
 
-cdef extern from "cpu_sa.h":
-    vector[double] general_simulated_annealing(
-            char*, # giant array that holds all states
-            const int, # number of samples
-            vector[double] &, # h
-            vector[int] &, # coupler starts
-            vector[int] &, # coupler ends
-            vector[double] &, # coupler weights
-            int, # sweeps per beta
-            vector[double] &, # beta schedule
-            unsigned long long) # seed
-
-def simulated_annealing(num_samples, h, coupler_starts, coupler_ends, 
+def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -47,12 +34,12 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         order as `coupler_starts` and `coupler_ends`.
 
     sweeps_per_beta : int
-        The number of sweeps to perform at each beta value provided in 
-        `beta_schedule`. The total number of sweeps per sample is 
+        The number of sweeps to perform at each beta value provided in
+        `beta_schedule`. The total number of sweeps per sample is
         sweeps_per_beta * len(beta_schedule).
 
     beta_schedule : list(float)
-        A list of the different beta values to run sweeps at. 
+        A list of the different beta values to run sweeps at.
 
     seed : 64 bit int > 0
         The seed to use for the PRNG. Must be a positive integer
@@ -75,16 +62,14 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
-
-    cdef np.ndarray[char, ndim=1, mode="c"] states_numpy = \
-            np.empty(num_samples*num_vars, dtype="b")
+    cdef np.ndarray[char, ndim=1, mode="c"] states_numpy = np.empty(num_samples*num_vars, dtype="b")
     cdef char* states = &states_numpy[0]
-    
-    energies = general_simulated_annealing(states, num_samples, h, 
-                                           coupler_starts, coupler_ends, 
-                                           coupler_weights, 
-                                           sweeps_per_beta, beta_schedule, 
-                                           seed)
+
+    energies = sa.general_simulated_annealing(states, num_samples, h,
+                                              coupler_starts, coupler_ends,
+                                              coupler_weights,
+                                              sweeps_per_beta, beta_schedule,
+                                              seed)
 
     annealed_states = states_numpy.reshape((num_samples, num_vars))
 

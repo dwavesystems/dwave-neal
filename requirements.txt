@@ -1,3 +1,15 @@
 cython==0.28.2
-numpy==1.13.0
+
+numpy==1.14.3
 dimod==0.3.1
+six==1.11.0
+
+coverage
+sphinx
+sphinx_rtd_theme
+recommonmark
+mock
+coveralls
+
+ipython
+

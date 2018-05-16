@@ -1,24 +1,18 @@
 from __future__ import division
-import sys
-from random import randint
+
 import math
 
+from random import randint
+
+from six import itervalues, iteritems
 from dimod import TemplateSampler, NumpySpinResponse
 from dimod.decorators import ising
 
-from dwave_neal_sampler import simulated_annealing
+from neal.src import simulated_annealing
 
-if sys.version_info[0] == 2:
-    range = xrange
-    itervalues = lambda d: d.itervalues()
-    iteritems = lambda d: d.iteritems()
-    int_types = (int, long)
-else:
-    itervalues = lambda d: d.values()
-    iteritems = lambda d: d.items()
-    int_types = (int,)
 
 __all__ = ["Neal", "NealSampler"]
+
 
 class NealSampler(TemplateSampler):
     @ising(1, 2)

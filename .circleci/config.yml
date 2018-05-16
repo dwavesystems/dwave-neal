@@ -34,7 +34,7 @@ jobs:
       - run: &install-package-template
           name: install package
           command: |
-            
+            pip install .
         
       - run: &run-tests-template
           name: run unittests
@@ -118,6 +118,8 @@ jobs:
 
       - run: *run-tests-template
 
+      - run: *install-package-template
+
       - run:
           name: clear virtual environment
           command: |
@@ -141,6 +143,8 @@ jobs:
           paths:
             - ./env
           key: dependencies3.6-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run: *install-package-template
 
       - run: *run-tests-template
 
