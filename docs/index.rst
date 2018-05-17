@@ -2,25 +2,36 @@
 
 .. _contents:
 
-Overview
-========
+=================
+D-Wave Binary CSP
+=================
 
-dwave_neal is an implementation of a simulated annealing sampler for general Ising model graphs in C++ with a dimod Python wrapper.
+.. include:: ../README.rst
+  :start-after: index-start-marker
+  :end-before: index-end-marker
 
 Documentation
 -------------
 
 .. only:: html
 
-    :Release: |version|
-    :Date: |today|
+  :Release: |version|
+  :Date: |today|
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   sampler_interface
-   about_dwave
-   license
+  reference/index
+  installation
+  license
+
+.. toctree::
+  :caption: D-Wave's Ocean Software
+  :maxdepth: 1
+
+  dwave
+  ocean
+  contributing
 
 Indices and tables
 ------------------

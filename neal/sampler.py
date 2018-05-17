@@ -33,13 +33,69 @@ __all__ = ["Neal", "SimulatedAnnealingSampler"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler):
-    """todo"""
+    """Simulated annealing sampler.
+
+    Also aliased as :class:`.Neal`.
+
+    Examples:
+
+        >>> import neal
+        ...
+        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> h = {'a': 0.0, 'b': 0.0, 'c': 0.0}
+        >>> J = {('a', 'b'): 1.0, ('b', 'c'): 1.0, ('a', 'c'): 1.0}
+        >>> resp = sampler.sample_ising(h, J)
+        >>> for sample in resp:  # doctest: +SKIP
+        ...     print(sample)
+        ... {'a': -1, 'b': 1, 'c': -1}
+        ... {'a': -1, 'b': 1, 'c': 1}
+        ... {'a': 1, 'b': 1, 'c': -1}
+        ... {'a': 1, 'b': -1, 'c': -1}
+        ... {'a': 1, 'b': -1, 'c': -1}
+        ... {'a': 1, 'b': -1, 'c': -1}
+        ... {'a': -1, 'b': 1, 'c': 1}
+        ... {'a': 1, 'b': 1, 'c': -1}
+        ... {'a': -1, 'b': -1, 'c': 1}
+        ... {'a': -1, 'b': 1, 'c': 1}
+
+    """
 
     parameters = None
-    """todo"""
+    """dict: The keyword arguments accepted by SimulatedAnnealingSampler's sample methods.
+
+    The keys are the allowed kwargs, the values are a list of the
+    :attr:`SimulatedAnnealingSampler.properties` relevant to the kwarg.
+
+    See :meth:`.SimulatedAnnealingSampler.sample` for a description of the parameters.
+
+    Examples:
+
+        >>> import neal
+        ...
+        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> for kwarg in sorted(sampler.parameters):
+        ...     print(kwarg)
+        beta_range
+        beta_schedule_type
+        num_reads
+        seed
+        sweeps
+        >>> sampler.parameters  # doctest: +SKIP
+        {'beta_range': [], 'num_reads': [], 'sweeps': [], 'beta_schedule_type': ['beta_shedule_options'], 'seed': []}
+
+    """
 
     properties = None
-    """todo"""
+    """dict: The sampler's properties.
+
+    Examples:
+        >>> import neal
+        ...
+        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> sampler.properties
+        {'beta_shedule_options': ('linear', 'geometric')}
+
+    """
 
     def __init__(self):
         # create a local copy in case folks for some reason want to modify them
@@ -54,53 +110,44 @@ class SimulatedAnnealingSampler(dimod.Sampler):
     @dimod.decorators.bqm_index_labels
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
                beta_schedule_type="linear", seed=None):
-        """
-        Sample from low-energy spin states using simulated annealing
-        sampler written in C++.
+        """Sample from low-energy states using simulated annealing.
 
         Args:
-            h (dict): A dictionary of the linear biases in the Ising
-                problem. Should be of the form {v: bias, ...} for each
-                variable v in the Ising problem.
-            J (dict): A dictionary of the quadratic biases in the Ising
-                problem. Should be a dict of the form
-                {(u, v): bias, ...} for each edge (u, v) in the Ising
-                problem. If J[(u, v)] and J[(v, u)] exist then the
-                biases are added.
-            beta_range (tuple, optional): A 2-tuple defining the
-                beginning and end of the beta schedule (beta is the
-                inverse temperature). The schedule is applied linearly
-                in beta. Default is chosen based on the total bias
-                associated with each node.
-            num_reads (int, optional): Each sample is the result of
-                a single run of the simulated annealing algorithm.
-            sweeps (int, optional): The number of sweeps or steps.
-                Default is 1000.
-            beta_schedule_type (string, optional): The beta schedule
-                type, or how the beta values are interpolated between
+            bqm (:obj:`dimod.BinaryQuadraticModel`):
+                The binary quadratic model to be samples.
+
+            beta_range (tuple, optional):
+                A 2-tuple defining the beginning and end of the beta schedule (beta is the
+                inverse temperature). The schedule is applied linearly in beta. Default is chosen
+                based on the total bias associated with each node.
+
+            num_reads (int, optional, default=10):
+                Each read is the result of a single run of the simulated annealing algorithm.
+
+            sweeps (int, optional, default=1000):
+                The number of sweeps or steps.
+
+            beta_schedule_type (string, optional, default='lienar'):
+                The beta schedule type, or how the beta values are interpolated between
                 the given 'beta_range'. Default is "linear".
-            seed (int, optional): The seed to use for the PRNG.
-                Supplying the same seed with the rest of the same
-                parameters should produce identical results. Default
-                is 'None', for which a random seed will be filled in.
+
+            seed (int, optional):
+                The seed to use for the PRNG. Supplying the same seed with the rest of the same
+                parameters should produce identical results. If not provided, a random seed
+                is chosen.
 
         Returns:
-            :obj:`SpinResponse`
+            :obj:`dimod.Response`
 
         Examples:
-            >>> sampler = FastSimulatedAnnealingSampler()
-            >>> h = {0: -1, 1: -1}
-            >>> J = {(0, 1): -1}
-            >>> response = sampler.sample_ising(h, J, num_reads=1)
-            >>> list(response.samples())
-            [{0: 1, 1: 1}]
 
-        Notes:
-        ------
-        This requires the GeneralSimulatedAnnealing Cython
-        interface to the C++ CPU solver.
+            >>> import dimod
+            >>> import neal
+            ...
+            >>> sampler = neal.SimulatedAnnealingSampler()
+            >>> bqm = dimod.BinaryQuadraticModel({'a': .5, 'b': -.5}, {('a', 'b'): -1}, 0.0, dimod.SPIN)
+            >>> response = sampler.sample(bqm)
 
-        A linear scheudule is used for beta.
         """
 
         # bqm is checked by decorator which also ensures that the variables are index-labelled
@@ -166,7 +213,6 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
 
 Neal = SimulatedAnnealingSampler
-"""Alias of :class:`.SimulatedAnnealingSampler`."""
 
 
 def _default_ising_beta_range(h, J):
