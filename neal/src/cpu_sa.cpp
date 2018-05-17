@@ -1,3 +1,19 @@
+// Copyright 2018 D-Wave Systems Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// ===========================================================================
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -7,9 +23,7 @@
 #include <stdexcept>
 #include "cpu_sa.h"
 
-/**
- * xorshift128+ as defined https://en.wikipedia.org/wiki/Xorshift#xorshift.2B
- */
+// xorshift128+ as defined https://en.wikipedia.org/wiki/Xorshift#xorshift.2B
 #define FASTRAND(rand) do {                       \
     uint64_t x = rng_state[0];                    \
     uint64_t const y = rng_state[1];              \
@@ -25,19 +39,17 @@ using namespace std;
 
 uint64_t rng_state[2]; // this holds the state of the rng
 
-/**
- * Returns the energy delta from flipping variable at index `var`
- * @param var the index of the variable to flip
- * @param state the current state of all variables
- * @param h vector of h or field value on each variable
- * @param degrees the degree of each variable
- * @param neighbors lists of the neighbors of each variable, such that 
- *        neighbors[i][j] is the jth neighbor of variable i.
- * @param neighbour_couplings same as neighbors, but instead has the J value.
- *        neighbour_couplings[i][j] is the J value or weight on the coupling
- *        between variables i and neighbors[i][j]. 
- * @return delta energy
- */
+// Returns the energy delta from flipping variable at index `var`
+// @param var the index of the variable to flip
+// @param state the current state of all variables
+// @param h vector of h or field value on each variable
+// @param degrees the degree of each variable
+// @param neighbors lists of the neighbors of each variable, such that 
+//     neighbors[i][j] is the jth neighbor of variable i.
+// @param neighbour_couplings same as neighbors, but instead has the J value.
+//     neighbour_couplings[i][j] is the J value or weight on the coupling
+//     between variables i and neighbors[i][j]. 
+// @return delta energy
 double get_flip_energy(int var, char *state, vector<double> & h, 
                       vector<int> & degrees, 
                       vector<vector<int>> & neighbors, 
@@ -57,25 +69,23 @@ double get_flip_energy(int var, char *state, vector<double> & h,
     return -2 * state[var] * energy;
 }
 
-/**
- * Performs a single run of simulated annealing with the given inputs.
- * @param state a signed char array where each char holds the state of a
- *        variable. Note that this can be unitialized as it will be randomly
- *        set at the beginning of this function.
- * @param h vector of h or field value on each variable
- * @param degrees the degree of each variable
- * @param neighbors lists of the neighbors of each variable, such that 
- *        neighbors[i][j] is the jth neighbor of variable i. Note
- * @param neighbour_couplings same as neighbors, but instead has the J value.
- *        neighbour_couplings[i][j] is the J value or weight on the coupling
- *        between variables i and neighbors[i][j]. 
- * @param sweeps_per_beta The number of sweeps to perform at each beta value.
- *        Total number of sweeps is `sweeps_per_beta` * length of
- *        `beta_schedule`.
- * @param beta_schedule A list of the beta values to run `sweeps_per_beta`
- *        sweeps at.
- * @return Nothing, but `state` now contains the result of the run.
- */
+// Performs a single run of simulated annealing with the given inputs.
+// @param state a signed char array where each char holds the state of a
+//        variable. Note that this can be unitialized as it will be randomly
+//        set at the beginning of this function.
+// @param h vector of h or field value on each variable
+// @param degrees the degree of each variable
+// @param neighbors lists of the neighbors of each variable, such that 
+//        neighbors[i][j] is the jth neighbor of variable i. Note
+// @param neighbour_couplings same as neighbors, but instead has the J value.
+//        neighbour_couplings[i][j] is the J value or weight on the coupling
+//        between variables i and neighbors[i][j]. 
+// @param sweeps_per_beta The number of sweeps to perform at each beta value.
+//        Total number of sweeps is `sweeps_per_beta` * length of
+//        `beta_schedule`.
+// @param beta_schedule A list of the beta values to run `sweeps_per_beta`
+//        sweeps at.
+// @return Nothing, but `state` now contains the result of the run.
 void simulated_annealing_run(char* state, vector<double>& h, 
                                vector<int>& degrees, 
                                vector<vector<int>>& neighbors, 
@@ -174,19 +184,17 @@ void simulated_annealing_run(char* state, vector<double>& h,
     free(delta_energy);
 }
 
-/**
- * Returns the energy of a given state and problem
- * @param state a char array containing the spin state to compute the energy of
- * @param h vector of h or field value on each variable
- * @param coupler_starts an int vector containing the variables of one side of
- *        each coupler in the problem
- * @param coupler_ends an int vector containing the variables of the other side 
- *        of each coupler in the problem
- * @param coupler_weights a double vector containing the weights of the 
- *        couplers in the same order as coupler_starts and coupler_ends
- * @return A double corresponding to the energy for `state` on the problem
- *         defined by h and the couplers passed in
- */
+// Returns the energy of a given state and problem
+// @param state a char array containing the spin state to compute the energy of
+// @param h vector of h or field value on each variable
+// @param coupler_starts an int vector containing the variables of one side of
+//        each coupler in the problem
+// @param coupler_ends an int vector containing the variables of the other side 
+//        of each coupler in the problem
+// @param coupler_weights a double vector containing the weights of the 
+//        couplers in the same order as coupler_starts and coupler_ends
+// @return A double corresponding to the energy for `state` on the problem
+//        defined by h and the couplers passed in
 double get_state_energy(char* state, vector<double> h, 
                         vector<int> coupler_starts, vector<int> coupler_ends, 
                         vector<double> coupler_weights) {
@@ -203,27 +211,25 @@ double get_state_energy(char* state, vector<double> h,
     return energy;
 }
 
-/**
- * Perform simulated annealing on a general problem
- * @param states a char array of size num_samples * number of variables in the
- *        problem. Will be overwritten by this function as samples are filled
- *        in.
- * @param num_samples the number of samples to get.
- * @param h vector of h or field value on each variable
- * @param coupler_starts an int vector containing the variables of one side of
- *        each coupler in the problem
- * @param coupler_ends an int vector containing the variables of the other side 
- *        of each coupler in the problem
- * @param coupler_weights a double vector containing the weights of the couplers
- *        in the same order as coupler_starts and coupler_ends
- * @param sweeps_per_beta The number of sweeps to perform at each beta value.
- *        Total number of sweeps is `sweeps_per_beta` * length of
- *        `beta_schedule`.
- * @param beta_schedule A list of the beta values to run `sweeps_per_beta`
- *        sweeps at.
- * @return A double vector containing the energies of all the states that were
- *         written to `states`.
- */
+// Perform simulated annealing on a general problem
+// @param states a char array of size num_samples * number of variables in the
+//        problem. Will be overwritten by this function as samples are filled
+//        in.
+// @param num_samples the number of samples to get.
+// @param h vector of h or field value on each variable
+// @param coupler_starts an int vector containing the variables of one side of
+//        each coupler in the problem
+// @param coupler_ends an int vector containing the variables of the other side 
+//        of each coupler in the problem
+// @param coupler_weights a double vector containing the weights of the couplers
+//        in the same order as coupler_starts and coupler_ends
+// @param sweeps_per_beta The number of sweeps to perform at each beta value.
+//        Total number of sweeps is `sweeps_per_beta` * length of
+//        `beta_schedule`.
+// @param beta_schedule A list of the beta values to run `sweeps_per_beta`
+//        sweeps at.
+// @return A double vector containing the energies of all the states that were
+//         written to `states`.
 vector<double> general_simulated_annealing(char* states, const int num_samples,
                                            vector<double> h, 
                                            vector<int> coupler_starts, 
