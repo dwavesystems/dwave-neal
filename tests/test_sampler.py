@@ -57,26 +57,26 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         self.assertIsInstance(response, dimod.Response, "Sampler returned an unexpected response type")
 
-    def test_num_samples(self):
+    def test_num_reads(self):
         sampler = Neal()
 
         h = {}
         J = {('a', 'b'): .5, (0, 'a'): -1, (1, 'b'): 0.0}
 
-        for num_samples in (1, 10, 100, 3223, 10352):
-            response = sampler.sample_ising(h, J, num_samples=num_samples)
+        for num_reads in (1, 10, 100, 3223, 10352):
+            response = sampler.sample_ising(h, J, num_reads=num_reads)
             row, col = response.samples_matrix.shape
 
-            self.assertEqual(row, num_samples)
+            self.assertEqual(row, num_reads)
             self.assertEqual(col, 4)
 
-        for bad_num_samples in (0, -1, -100):
+        for bad_num_reads in (0, -1, -100):
             with self.assertRaises(ValueError):
-                sampler.sample_ising(h, J, num_samples=bad_num_samples)
+                sampler.sample_ising(h, J, num_reads=bad_num_reads)
 
-        for bad_num_samples in (3.5, float("inf"), "string", [], {}):
+        for bad_num_reads in (3.5, float("inf"), "string", [], {}):
             with self.assertRaises(TypeError):
-                sampler.sample_ising(h, J, num_samples=bad_num_samples)
+                sampler.sample_ising(h, J, num_reads=bad_num_reads)
 
     def test_empty_problem(self):
         sampler = Neal()
@@ -95,7 +95,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
-        num_samples = 1000
+        num_reads = 1000
 
         # test seed exceptions
         for bad_seed in (3.5, float("inf"), "string", [], {}):
@@ -104,15 +104,15 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
             self.assertRaises(ValueError, sampler.sample_ising, {}, {}, seed=bad_seed)
 
         # make sure it can accept large seeds
-        sampler.sample_ising(h, J, seed=2**63, num_samples=1, sweeps=1)
+        sampler.sample_ising(h, J, seed=2**63, num_reads=1, sweeps=1)
 
         # no need to do a bunch of sweeps, in fact the less we do the more
         # sure we can be that the same seed is returning the same result
         all_samples = []
 
         for seed in (1, 25, 2352, 736145, 5682453, 923759283623):
-            response0 = sampler.sample_ising(h, J, num_samples=num_samples, sweeps=10, seed=seed)
-            response1 = sampler.sample_ising(h, J, num_samples=num_samples, sweeps=10, seed=seed)
+            response0 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
+            response1 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
 
             samples0 = response0.samples_matrix
             samples1 = response1.samples_matrix
@@ -139,7 +139,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                 (3, 5): -1,
                 }
 
-        resp = sampler.sample_ising(h, J, sweeps=1000, num_samples=100)
+        resp = sampler.sample_ising(h, J, sweeps=1000, num_reads=100)
 
         row, col = resp.samples_matrix.shape
 
@@ -152,18 +152,18 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
-        num_samples = 10
+        num_reads = 10
 
-        resp = sampler.sample_ising(h, J, num_samples=num_samples, beta_schedule_type='geometric')
+        resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='geometric')
 
         row, col = resp.samples_matrix.shape
 
-        self.assertEqual(row, num_samples)
+        self.assertEqual(row, num_reads)
         self.assertEqual(col, num_vars)  # should get back two variables
         self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
 
         with self.assertRaises(ValueError):
-            sampler.sample_ising(h, J, num_samples=num_samples, beta_schedule_type='asd')
+            sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='asd')
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):

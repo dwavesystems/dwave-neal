@@ -44,7 +44,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
     def __init__(self):
         # create a local copy in case folks for some reason want to modify them
         self.parameters = {'beta_range': [],
-                           'num_samples': [],
+                           'num_reads': [],
                            'sweeps': [],
                            'beta_schedule_type': ['beta_shedule_options'],
                            'seed': []}
@@ -52,7 +52,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            }
 
     @dimod.decorators.bqm_index_labels
-    def sample(self, bqm, beta_range=None, num_samples=10, sweeps=1000,
+    def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
                beta_schedule_type="linear", seed=None):
         """
         Sample from low-energy spin states using simulated annealing
@@ -72,7 +72,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 inverse temperature). The schedule is applied linearly
                 in beta. Default is chosen based on the total bias
                 associated with each node.
-            num_samples (int, optional): Each sample is the result of
+            num_reads (int, optional): Each sample is the result of
                 a single run of the simulated annealing algorithm.
             sweeps (int, optional): The number of sweeps or steps.
                 Default is 1000.
@@ -91,7 +91,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             >>> sampler = FastSimulatedAnnealingSampler()
             >>> h = {0: -1, 1: -1}
             >>> J = {(0, 1): -1}
-            >>> response = sampler.sample_ising(h, J, num_samples=1)
+            >>> response = sampler.sample_ising(h, J, num_reads=1)
             >>> list(response.samples())
             [{0: 1, 1: 1}]
 
@@ -107,9 +107,9 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         # beta_range, sweeps are handled by simulated_annealing
 
-        if not isinstance(num_samples, Integral):
+        if not isinstance(num_reads, Integral):
             raise TypeError("'samples' should be a positive integer")
-        if num_samples < 1:
+        if num_reads < 1:
             raise ValueError("'samples' should be a positive integer")
 
         if not (seed is None or isinstance(seed, Integral)):
@@ -154,7 +154,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             seed = randint(0, (1 << 64 - 1))
 
         # run the simulated annealing algorithm
-        samples, energies = simulated_annealing(num_samples, h,
+        samples, energies = simulated_annealing(num_reads, h,
                                                 coupler_starts, coupler_ends,
                                                 coupler_weights,
                                                 sweeps_per_beta, beta_schedule,
