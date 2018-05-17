@@ -1,7 +1,7 @@
 cython==0.28.2
 
 numpy==1.14.3
-dimod==0.3.1
+dimod==0.6.8
 six==1.11.0
 
 coverage
@@ -12,4 +12,3 @@ mock
 coveralls
 
 ipython
-

@@ -65,7 +65,7 @@ packages = ['neal',
             'neal/src'
             ]
 
-install_requires = ['dimod==0.3.1',
+install_requires = ['dimod>=0.6.7,<0.7.0',
                     'numpy>=1.14.0,<1.15.0',
                     'six>=1.11.0,<2.0.0'
                     ]
