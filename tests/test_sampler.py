@@ -139,7 +139,31 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                 (3, 5): -1,
                 }
 
-        response = sampler.sample_ising(h, J, sweeps=1000, num_samples=100)
+        resp = sampler.sample_ising(h, J, sweeps=1000, num_samples=100)
+
+        row, col = resp.samples_matrix.shape
+
+        self.assertEqual(row, 100)
+        self.assertEqual(col, 6)  # should get back two variables
+        self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
+
+    def test_geometric_schedule(self):
+        sampler = Neal()
+        num_vars = 40
+        h = {v: -1 for v in range(num_vars)}
+        J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
+        num_samples = 10
+
+        resp = sampler.sample_ising(h, J, num_samples=num_samples, beta_schedule_type='geometric')
+
+        row, col = resp.samples_matrix.shape
+
+        self.assertEqual(row, num_samples)
+        self.assertEqual(col, num_vars)  # should get back two variables
+        self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
+
+        with self.assertRaises(ValueError):
+            sampler.sample_ising(h, J, num_samples=num_samples, beta_schedule_type='asd')
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
