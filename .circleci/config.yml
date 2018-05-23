@@ -149,6 +149,34 @@ jobs:
 
       - run: *run-tests-template
 
+  manylinux-64: &manylinux-template
+    docker:
+      - image: quay.io/pypa/manylinux1_x86_64
+
+    steps:
+      - checkout
+
+      - run:
+          name: build wheels
+          command: |
+            for PYBIN in /opt/python/*/bin; do
+              "${PYBIN}/pip" install -r requirements.txt
+              "${PYBIN}/python" setup.py sdist bdist_wheel
+            done
+
+      - store_artifacts:
+          path: ./dist/
+
+      - save_cache:
+          paths:
+            - ./dist
+          key: dist-{{ .Environment.CIRCLE_JOB }}-{{ .Environment.CIRCLE_SHA1 }}
+
+  manylinux-32:
+    <<: *manylinux-template
+    docker:
+      - image: quay.io/pypa/manylinux1_i686
+
 workflows:
   version: 2
   test:
@@ -163,3 +191,17 @@ workflows:
             - test-2.7
             - test-3.5
             - test-3.4
+  deploy:
+    jobs:
+      - manylinux-64:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/
+      - manylinux-32:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/

@@ -46,7 +46,10 @@ class build_ext_compiler_check(build_ext):
         build_ext.run(self)
 
 
-ext = '.pyx' if USE_CYTHON else '.cpp'
+if USE_CYTHON:
+    ext = '.pyx'
+else:
+    ext = '.cpp'
 
 
 extensions = [Extension(
