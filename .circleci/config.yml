@@ -153,23 +153,31 @@ jobs:
     docker:
       - image: quay.io/pypa/manylinux1_x86_64
 
+    working_directory: ~/repo
+
     steps:
       - checkout
+
+      - run:
+          name: make dist directory
+          command: |
+            mkdir -p /home/circleci/dist
 
       - run:
           name: build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -r requirements.txt
-              "${PYBIN}/python" setup.py sdist bdist_wheel
+              "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
+              "${PYBIN}/python" setup.py bdist_wheel -d /home/circleci/dist
             done
 
       - store_artifacts:
-          path: ./dist/
+          path: /home/circleci/dist
 
       - save_cache:
           paths:
-            - ./dist
+            - /home/circleci/dist
           key: dist-{{ .Environment.CIRCLE_JOB }}-{{ .Environment.CIRCLE_SHA1 }}
 
   manylinux-32:
@@ -182,8 +190,9 @@ jobs:
     docker:
       - image: circleci/python:3.6-jessie
 
+    working_directory: ~/repo
+
     steps:
-      - checkout
 
       - restore_cache:
           keys:
@@ -191,18 +200,22 @@ jobs:
             - dist-manylinux-32-{{ .Environment.CIRCLE_SHA1 }}
 
       - run:
+          name: create virtualenv
+          command: |
+            python -m virtualenv env
+
+      - run:
           name: install twine
           command: |
             . env/bin/activate
             pip install twine
 
+      # this will fail if version does not match tag
       - run:
-          name: verify version matches tag
+          name: install package from source
           command: |
             . env/bin/activate
-            pip install .
-            echo $CIRCLE_TAG
-            [[ "$(pip show neal 2>/dev/null | grep Version)" == "Version: $CIRCLE_TAG" ]]
+            pip install /home/circleci/dist/neal-$CIRCLE_TAG.tar.gz
 
       - run:
           name: init .pypirc
@@ -215,7 +228,7 @@ jobs:
           name: upload
           command: |
             . env/bin/activate
-            twine upload dist/*
+            twine upload /home/circleci/dist/*
 
 workflows:
   version: 2
@@ -253,4 +266,4 @@ workflows:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
-              only: /.*/
+              ignore: /.*/
