@@ -55,7 +55,7 @@ else:
 extensions = [Extension(
     name='neal.src.simulated_annealing',
     sources=['./neal/src/simulated_annealing' + ext,
-             './neal/src/cpu_sa.cpp',
+             './neal/src/cpu_sa.cpp'
              ],
     include_dirs=['./neal/src/'],
     language='c++',
