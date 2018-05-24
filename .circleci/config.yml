@@ -72,14 +72,14 @@ jobs:
           path: ./dist
 
       - run: &sdist-install-template
-          name: build sdist without cython
+          name: install sdist without cython
           command: |
             python -m virtualenv env_sdist
             . env_sdist/bin/activate
             pip install dist/neal-*.tar.gz
 
       - run: &sdist-cython-install-template
-          name: build sdist with cython
+          name: install sdist with cython
           command: |
             python -m virtualenv env_cython_sdist
             . env_cython_sdist/bin/activate
@@ -204,7 +204,8 @@ jobs:
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -r requirements.txt
-              "${PYBIN}/python" setup.py sdist bdist_wheel -d /home/circleci/dist
+              "${PYBIN}/python" setup.py bdist_wheel -d /home/circleci/dist
+              "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
             done
 
       - store_artifacts:
