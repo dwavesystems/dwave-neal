@@ -2,9 +2,9 @@
 
 .. _contents:
 
-=================
-D-Wave Binary CSP
-=================
+==========
+dwave-neal
+==========
 
 .. include:: ../README.rst
   :start-after: index-start-marker

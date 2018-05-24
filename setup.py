@@ -86,7 +86,7 @@ else:
 
 
 setup(
-    name='neal',
+    name='dwave-neal',
     version=__version__,
     author=__author__,
     author_email=__authoremail__,

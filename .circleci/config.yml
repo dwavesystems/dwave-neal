@@ -76,7 +76,7 @@ jobs:
           command: |
             python -m virtualenv env_sdist
             . env_sdist/bin/activate
-            pip install dist/neal-*.tar.gz
+            pip install dist/dwave-neal-*.tar.gz
 
       - run: &sdist-cython-install-template
           name: install sdist with cython
@@ -84,7 +84,7 @@ jobs:
             python -m virtualenv env_cython_sdist
             . env_cython_sdist/bin/activate
             pip install cython
-            pip install dist/neal-*.tar.gz
+            pip install dist/dwave-neal-*.tar.gz
 
 
   test-3.5:
@@ -211,7 +211,7 @@ jobs:
       - run:
           name: bundle shared libraries into wheels
           command: |
-            for whl in ./dist/neal*.whl; do
+            for whl in ./dist/dwave*neal*.whl; do
               auditwheel repair "$whl" -w /home/circleci/dist
             done
 
@@ -258,7 +258,7 @@ jobs:
           name: install package from source
           command: |
             . env/bin/activate
-            pip install /home/circleci/dist/neal-$CIRCLE_TAG.tar.gz
+            pip install /home/circleci/dist/dwave-neal-$CIRCLE_TAG.tar.gz
 
       - run:
           name: init .pypirc
