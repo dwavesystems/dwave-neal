@@ -55,6 +55,7 @@ jobs:
           name: doctest
           command: |
             . env/bin/activate
+            pip install .
             make -C docs/ doctest
 
   test-3.5:
