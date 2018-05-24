@@ -62,6 +62,31 @@ jobs:
             pip install .
             make -C docs/ doctest
 
+      - run: &sdist-build-template
+          name: build sdist
+          command: |
+            . env/bin/activate
+            python setup.py sdist
+
+      - store_artifacts:
+          path: ./dist
+
+      - run: &sdist-install-template
+          name: build sdist without cython
+          command: |
+            python -m virtualenv env_sdist
+            . env_sdist/bin/activate
+            pip install dist/neal-*.tar.gz
+
+      - run: &sdist-cython-install-template
+          name: build sdist with cython
+          command: |
+            python -m virtualenv env_cython_sdist
+            . env_cython_sdist/bin/activate
+            pip install cython
+            pip install dist/neal-*.tar.gz
+
+
   test-3.5:
     <<: *full-test-template
     docker:
@@ -154,6 +179,12 @@ jobs:
 
       - run: *run-tests-template
 
+      - run: *sdist-build-template
+
+      - run: *sdist-install-template
+
+      - run: *sdist-cython-install-template
+
   manylinux-64: &manylinux-template
     docker:
       - image: quay.io/pypa/manylinux1_x86_64
@@ -173,8 +204,7 @@ jobs:
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -r requirements.txt
-              "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
-              "${PYBIN}/python" setup.py bdist_wheel -d /home/circleci/dist
+              "${PYBIN}/python" setup.py sdist bdist_wheel -d /home/circleci/dist
             done
 
       - store_artifacts:
