@@ -147,9 +147,9 @@ jobs:
             - ./env
           key: dependencies2.7-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
-      - run: *run-tests-template
-
       - run: *install-package-template
+
+      - run: *run-tests-template
 
       - run:
           name: clear virtual environment
