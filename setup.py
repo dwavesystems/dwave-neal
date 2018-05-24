@@ -73,6 +73,9 @@ install_requires = ['dimod>=0.6.7,<0.7.0',
                     'six>=1.11.0,<2.0.0'
                     ]
 
+setup_requires = ['numpy>=1.14.0,<1.15.0'
+                  ]
+
 _PY2 = sys.version_info.major == 2
 
 # add __version__, __author__, __authoremail__, __description__ to this namespace
@@ -95,5 +98,6 @@ setup(
     install_requires=install_requires,
     ext_modules=extensions,
     cmdclass={'build_ext': build_ext_compiler_check},
+    setup_requires=setup_requires,
     zip_safe=False
 )
