@@ -204,8 +204,15 @@ jobs:
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -r requirements.txt
-              "${PYBIN}/python" setup.py bdist_wheel -d /home/circleci/dist
+              "${PYBIN}/pip" wheel . -w ./dist
               "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
+            done
+
+      - run:
+          name: bundle shared libraries into wheels
+          command: |
+            for whl in ./dist/neal*.whl; do
+              auditwheel repair "$whl" -w /home/circleci/dist
             done
 
       - store_artifacts:
