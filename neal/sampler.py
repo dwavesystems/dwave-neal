@@ -13,7 +13,10 @@
 #    limitations under the License.
 #
 # ================================================================================================
+"""
+A dimod sampler_ that uses the simulated annealing algorithm.
 
+"""
 from __future__ import division
 
 import math
@@ -38,14 +41,16 @@ class SimulatedAnnealingSampler(dimod.Sampler):
     Also aliased as :class:`.Neal`.
 
     Examples:
+        This example solves a simple Ising problem.
 
         >>> import neal
-        ...
         >>> sampler = neal.SimulatedAnnealingSampler()
         >>> h = {'a': 0.0, 'b': 0.0, 'c': 0.0}
         >>> J = {('a', 'b'): 1.0, ('b', 'c'): 1.0, ('a', 'c'): 1.0}
-        >>> resp = sampler.sample_ising(h, J)
-        >>> for sample in resp:  # doctest: +SKIP
+        >>> response = sampler.sample_ising(h, J)
+        >>> response.vartype
+        <Vartype.SPIN: frozenset([1, -1])>
+        >>> for sample in response:  # doctest: +SKIP
         ...     print(sample)
         ... {'a': -1, 'b': 1, 'c': -1}
         ... {'a': -1, 'b': 1, 'c': 1}
