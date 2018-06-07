@@ -66,17 +66,16 @@ class SimulatedAnnealingSampler(dimod.Sampler):
     """
 
     parameters = None
-    """dict: The keyword arguments accepted by SimulatedAnnealingSampler's sample methods.
-
-    The keys are the allowed kwargs, the values are a list of the
-    :attr:`SimulatedAnnealingSampler.properties` relevant to the kwarg.
+    """dict: A dict where keys are the keyword parameters accepted by the sampler methods
+    (allowed kwargs) and values are lists of :attr:`SimulatedAnnealingSampler.properties`
+    relevant to each parameter.
 
     See :meth:`.SimulatedAnnealingSampler.sample` for a description of the parameters.
 
     Examples:
+        This example looks at a sampler's parameters and some of their values.
 
         >>> import neal
-        ...
         >>> sampler = neal.SimulatedAnnealingSampler()
         >>> for kwarg in sorted(sampler.parameters):
         ...     print(kwarg)
@@ -85,20 +84,23 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         num_reads
         seed
         sweeps
-        >>> sampler.parameters  # doctest: +SKIP
-        {'beta_range': [], 'num_reads': [], 'sweeps': [], 'beta_schedule_type': ['beta_shedule_options'], 'seed': []}
+        >>> sampler.parameters['beta_range']
+        []
+        >>> sampler.parameters['beta_schedule_type']
+        ['beta_shedule_options']
 
     """
 
     properties = None
-    """dict: The sampler's properties.
+    """dict: A dict containing any additional information about the sampler.
 
     Examples:
+        This example looks at the values set for a sampler property.
+
         >>> import neal
-        ...
         >>> sampler = neal.SimulatedAnnealingSampler()
-        >>> sampler.properties
-        {'beta_shedule_options': ('linear', 'geometric')}
+        >>> sampler.properties['beta_shedule_options']
+        ('linear', 'geometric')
 
     """
 
