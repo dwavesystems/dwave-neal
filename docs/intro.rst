@@ -11,3 +11,7 @@ and returns an iterable of samples, in order of increasing energy. A dimod sampl
 ‘sample_qubo’ and ‘sample_ising’ methods as well as the generic BQM sampler method.
 
 .. _sampler: http://dimod.readthedocs.io/en/latest/reference/samplers.html
+
+The :class:`~neal.SimulatedAnnealingSampler` sampler implements the simulated annealing
+algorithm, based on the technique of cooling metal from a high temperature to improve its
+structure (annealing). This algorithm often finds good solutions to hard optimization problems.

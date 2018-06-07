@@ -117,43 +117,58 @@ class SimulatedAnnealingSampler(dimod.Sampler):
     @dimod.decorators.bqm_index_labels
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
                beta_schedule_type="linear", seed=None):
-        """Sample from low-energy states using simulated annealing.
+        """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
             bqm (:obj:`dimod.BinaryQuadraticModel`):
-                The binary quadratic model to be samples.
+                The binary quadratic model to be sampled.
 
             beta_range (tuple, optional):
-                A 2-tuple defining the beginning and end of the beta schedule (beta is the
-                inverse temperature). The schedule is applied linearly in beta. Default is chosen
+                A 2-tuple defining the beginning and end of the beta schedule, where beta is the
+                inverse temperature. The schedule is applied linearly in beta. Default range is set
                 based on the total bias associated with each node.
 
             num_reads (int, optional, default=10):
                 Each read is the result of a single run of the simulated annealing algorithm.
 
             sweeps (int, optional, default=1000):
-                The number of sweeps or steps.
+                Number of sweeps or steps.
 
-            beta_schedule_type (string, optional, default='lienar'):
-                The beta schedule type, or how the beta values are interpolated between
-                the given 'beta_range'. Default is "linear".
+            beta_schedule_type (string, optional, default='linear'):
+                Beta schedule type, or how the beta values are interpolated between
+                the given 'beta_range'. Supported values are:
+
+                * linear
+                * geometric
 
             seed (int, optional):
-                The seed to use for the PRNG. Supplying the same seed with the rest of the same
-                parameters should produce identical results. If not provided, a random seed
+                Seed to use for the PRNG. Specifying a particular seed with a constant
+                set of parameters produces identical results. If not provided, a random seed
                 is chosen.
 
         Returns:
-            :obj:`dimod.Response`
+            :obj:`dimod.Response`: A `dimod` :obj:`~dimod.Response` object.
 
         Examples:
+            This example runs simulated annealing on a binary quadratic model with some
+            different input paramters.
 
             >>> import dimod
             >>> import neal
             ...
             >>> sampler = neal.SimulatedAnnealingSampler()
             >>> bqm = dimod.BinaryQuadraticModel({'a': .5, 'b': -.5}, {('a', 'b'): -1}, 0.0, dimod.SPIN)
+            >>> # Run with default parameters
             >>> response = sampler.sample(bqm)
+            >>> # Run with specified parameters
+            >>> response = sampler.sample(bqm, seed=1234, beta_range=[0.1, 4.2],
+            ...                                num_reads=1, sweeps=20,
+            ...                                beta_schedule_type='geometric')
+            >>> # Reuse a seed
+            >>> a1 = next((sampler.sample(bqm, seed=88)).samples())['a']
+            >>> a2 = next((sampler.sample(bqm, seed=88)).samples())['a']
+            >>> a1 == a2
+            True
 
         """
 
