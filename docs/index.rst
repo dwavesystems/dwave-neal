@@ -21,6 +21,7 @@ Documentation
 .. toctree::
   :maxdepth: 1
 
+  intro
   reference/index
   installation
   license

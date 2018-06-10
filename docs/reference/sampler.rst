@@ -1,8 +1,8 @@
 .. _sampler:
 
-=========================
-SimulatedAnnealingSampler
-=========================
+===========================
+Simulated Annealing Sampler
+===========================
 
 .. automodule:: neal.sampler
 
