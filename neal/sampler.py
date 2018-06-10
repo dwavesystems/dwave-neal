@@ -48,8 +48,6 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         >>> h = {'a': 0.0, 'b': 0.0, 'c': 0.0}
         >>> J = {('a', 'b'): 1.0, ('b', 'c'): 1.0, ('a', 'c'): 1.0}
         >>> response = sampler.sample_ising(h, J)
-        >>> response.vartype
-        <Vartype.SPIN: frozenset([1, -1])>
         >>> for sample in response:  # doctest: +SKIP
         ...     print(sample)
         ... {'a': -1, 'b': 1, 'c': -1}
