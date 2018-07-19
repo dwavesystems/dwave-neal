@@ -33,4 +33,4 @@ deploy_script:
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
   - "echo username: %username% >> %USERPROFILE%\\.pypirc"
   - "echo password: %password% >> %USERPROFILE%\\.pypirc"
-  - cmd: "if [%APPVEYOR_REPO_TAG%]==[true] if NOT [%CPPDEBUG%]==[1] twine upload --skip-existing dist\\*.whl"
+  - cmd: "if [%APPVEYOR_REPO_TAG%]==[true] if NOT [%CPPDEBUG%]==[1] %PYTHON%\\Scripts\\twine upload --skip-existing dist\\*.whl"
