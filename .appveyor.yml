@@ -28,6 +28,7 @@ test_script:
 
 deploy_script:
   - "%PYTHON%\\python.exe -m pip install twine"
+  - "%PYTHON%\\python.exe -m pip install wheel"  
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
   - "echo [pypi] > %USERPROFILE%\\.pypirc"
   - "echo username: %username% >> %USERPROFILE%\\.pypirc"
