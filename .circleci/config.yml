@@ -92,11 +92,6 @@ jobs:
     docker:
       - image: circleci/python:3.5-jessie
 
-  test-3.4:
-    <<: *full-test-template
-    docker:
-      - image: circleci/python:3.4-jessie
-
   test-2.7:
     <<: *full-test-template
     docker:
@@ -203,6 +198,7 @@ jobs:
           name: build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
+              [[ $("${PYBIN}/python" -V 2>&1) =~ ^Python\ (2\.7|3\.5|3\.6|3\.7) ]] || continue
               "${PYBIN}/pip" install -r requirements.txt
               "${PYBIN}/pip" wheel . -w ./dist
               "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
@@ -413,13 +409,11 @@ workflows:
       - test-3.6
       - test-2.7
       - test-3.5
-      - test-3.4
       - test-osx:
           requires:
             - test-3.6
             - test-2.7
             - test-3.5
-            - test-3.4
   deploy:
     jobs:
       - manylinux-64:
