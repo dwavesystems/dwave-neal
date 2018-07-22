@@ -55,8 +55,7 @@ else:
 extensions = [Extension(
     name='neal.src.simulated_annealing',
     sources=['./neal/src/simulated_annealing' + ext,
-             './neal/src/cpu_sa.cpp'
-             ],
+             './neal/src/cpu_sa.cpp'],
     include_dirs=['./neal/src/'],
     language='c++',
 )]
@@ -65,16 +64,26 @@ if USE_CYTHON:
     extensions = cythonize(extensions, language='c++')
 
 packages = ['neal',
-            'neal/src'
-            ]
+            'neal/src']
 
 install_requires = ['dimod>=0.6.11,<0.7.0',
                     'numpy>=1.14.0,<1.15.0',
-                    'six>=1.11.0,<2.0.0'
-                    ]
+                    'six>=1.11.0,<2.0.0']
 
-setup_requires = ['numpy>=1.14.0,<1.15.0'
-                  ]
+setup_requires = ['numpy>=1.14.0,<1.15.0']
+
+classifiers = [
+    'License :: OSI Approved :: Apache Software License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7'
+]
+
+python_requires = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*'
 
 _PY2 = sys.version_info.major == 2
 
@@ -94,10 +103,12 @@ setup(
     long_description=open('README.rst').read(),
     url='https://github.com/dwavesystems/dwave-neal',
     license='Apache 2.0',
+    classifiers=classifiers,
     packages=packages,
     install_requires=install_requires,
     ext_modules=extensions,
     cmdclass={'build_ext': build_ext_compiler_check},
     setup_requires=setup_requires,
+    python_requires=python_requires,
     zip_safe=False
 )
