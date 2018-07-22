@@ -86,6 +86,10 @@ jobs:
             pip install cython
             pip install dist/dwave-neal-*.tar.gz
 
+  test-3.7:
+    <<: *full-test-template
+    docker:
+      - image: circleci/python:3.7-stretch
 
   test-3.5:
     <<: *full-test-template
@@ -117,10 +121,12 @@ jobs:
           - dependencies2.7-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
       - run:
-          name: install python 2.7.14 and 3.6.5 with pyenv
+          name: install python 2.7.14, 3.5.5, 3.6.5, and 3.7.0 with pyenv
           command: |
             pyenv install 2.7.14 -s
+            pyenv install 3.5.5 -s
             pyenv install 3.6.5 -s
+            pyenv install 3.7.0 -s
 
       - save_cache:
           paths:
@@ -146,10 +152,47 @@ jobs:
 
       - run: *run-tests-template
 
+      - run: *sdist-build-template
+
+      - run: *sdist-install-template
+
+      - run: *sdist-cython-install-template
+
       - run: &clear-env-template
           name: clear virtual environment
           command: |
             rm -rf env
+
+      - restore_cache:
+          keys:
+          - dependencies3.5-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: create virtualenv for 3.5.5
+          command: |
+            eval "$(pyenv init -)"
+            pyenv local 3.5.5
+            python -m pip install virtualenv
+            python -m virtualenv env
+
+      - run: *install-dependencies-template
+
+      - save_cache:
+          paths:
+            - ./env
+          key: dependencies3.5-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run: *install-package-template
+
+      - run: *run-tests-template
+
+      - run: *sdist-build-template
+
+      - run: *sdist-install-template
+
+      - run: *sdist-cython-install-template
+
+      - run: *clear-env-template
 
       - restore_cache:
           keys:
@@ -169,6 +212,37 @@ jobs:
           paths:
             - ./env
           key: dependencies3.6-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run: *install-package-template
+
+      - run: *run-tests-template
+
+      - run: *sdist-build-template
+
+      - run: *sdist-install-template
+
+      - run: *sdist-cython-install-template
+
+      - run: *clear-env-template
+
+      - restore_cache:
+          keys:
+          - dependencies3.7-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: create virtualenv for 3.7.0
+          command: |
+            eval "$(pyenv init -)"
+            pyenv local 3.7.0
+            python -m pip install virtualenv
+            python -m virtualenv env
+
+      - run: *install-dependencies-template
+
+      - save_cache:
+          paths:
+            - ./env
+          key: dependencies3.7-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
       - run: *install-package-template
 
@@ -243,11 +317,12 @@ jobs:
           - pyenv-versions-{{ .Environment.CIRCLE_JOB }}
 
       - run:
-          name: install python 2.7.14 and 3.6.5 with pyenv
+          name: install python 2.7.14, 3.5.5, 3.6.5, and 3.7.0 with pyenv
           command: |
             pyenv install 2.7.14 -s
             pyenv install 3.5.5 -s
             pyenv install 3.6.5 -s
+            pyenv install 3.7.0 -s
 
       - save_cache:
           paths:
@@ -293,6 +368,20 @@ jobs:
           command: |
             eval "$(pyenv init -)"
             pyenv local 3.6.5
+            python -m pip install virtualenv
+            python -m virtualenv env
+
+      - run: *install-dependencies-template
+
+      - run: *build-wheel-template
+
+      - run: *clear-env-template
+
+      - run:
+          name: create virtualenv for 3.7.0
+          command: |
+            eval "$(pyenv init -)"
+            pyenv local 3.7.0
             python -m pip install virtualenv
             python -m virtualenv env
 
@@ -406,14 +495,16 @@ workflows:
   version: 2
   test:
     jobs:
+      - test-3.7
       - test-3.6
-      - test-2.7
       - test-3.5
+      - test-2.7
       - test-osx:
           requires:
+            - test-3.7
             - test-3.6
-            - test-2.7
             - test-3.5
+            - test-2.7
   deploy:
     jobs:
       - manylinux-64:
