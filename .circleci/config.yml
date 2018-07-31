@@ -489,7 +489,7 @@ jobs:
           name: upload
           command: |
             . env/bin/activate
-            twine upload ./dist/*
+            twine upload ./dist/*macos*
 
 workflows:
   version: 2
