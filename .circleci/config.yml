@@ -216,14 +216,27 @@ jobs:
           command: |
             mkdir -p /home/circleci/dist
 
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
       - run:
           name: build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
+              "${PYBIN}/pip" install virtualenv
+              "${PYBIN}/python" -m virtualenv envs/env_$PYBIN
+              . envs/env_$PYBIN/bin/activate
               "${PYBIN}/pip" install -r requirements.txt
               "${PYBIN}/pip" wheel . -w ./dist
               "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
+              deactivate
             done
+
+      - save_cache:
+          paths:
+            - ./envs
+          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
       - run:
           name: bundle shared libraries into wheels
