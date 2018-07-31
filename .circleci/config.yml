@@ -212,46 +212,45 @@ jobs:
       - checkout
 
       - run:
-          name: make dist directory
-          command: |
-            mkdir -p /home/circleci/dist
-
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
           name: build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
-              "${PYBIN}/pip" install virtualenv
-              "${PYBIN}/python" -m virtualenv envs/env_$PYBIN
-              . envs/env_$PYBIN/bin/activate
               "${PYBIN}/pip" install -r requirements.txt
               "${PYBIN}/pip" wheel . -w ./dist
-              "${PYBIN}/python" setup.py sdist -d /home/circleci/dist
-              deactivate
+              "${PYBIN}/python" setup.py sdist -d ./dist
             done
-
-      - save_cache:
-          paths:
-            - ./envs
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
       - run:
           name: bundle shared libraries into wheels
           command: |
             for whl in ./dist/dwave*neal*.whl; do
-              auditwheel repair "$whl" -w /home/circleci/dist
+              auditwheel repair "$whl" -w ./dist
             done
 
       - store_artifacts:
-          path: /home/circleci/dist
+          path: ./dist
 
-      - save_cache:
-          paths:
-            - /home/circleci/dist
-          key: dist-{{ .Environment.CIRCLE_JOB }}-{{ .Environment.CIRCLE_SHA1 }}
+      - run: &init-pypirc-template
+          name: init .pypirc
+          command: |
+            echo -e "[pypi]" >> ~/.pypirc
+            echo -e "username = $PYPI_USERNAME" >> ~/.pypirc
+            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+
+      - run:
+          name: create a virtualenv
+          command: |
+            pythons=(/opt/python/*/bin)
+            python="${pythons[0]}"
+            "$python/pip" install virtualenv
+            "$python/python" -m virtualenv env
+
+      - run: &upload-template
+          name: install twine and deploy
+          command: |
+            . env/bin/activate
+            python -m pip install twine
+            twine upload --skip-existing dist/*
 
   build-manylinux-32:
     <<: *manylinux-template
@@ -310,10 +309,9 @@ jobs:
       - store_artifacts:
           path: ./dist
 
-      - save_cache:
-          paths:
-            - ./dist
-          key: dist-{{ .Environment.CIRCLE_JOB }}-{{ .Environment.CIRCLE_SHA1 }}
+      - run: *init-pypirc-template
+
+      - run: *upload-template
 
   build-osx-3.6:
     <<: *osx-build-template
@@ -321,54 +319,23 @@ jobs:
       PYTHON: 3.6.5
       HOMEBREW_NO_AUTO_UPDATE: 1
 
+  build-osx-3.5:
+    <<: *osx-build-template
+    environment:
+      PYTHON: 3.5.5
+      HOMEBREW_NO_AUTO_UPDATE: 1
 
-  # deploy-manylinux:
-  #   docker:
-  #     - image: circleci/python:3.6-jessie
+  build-osx-3.4:
+    <<: *osx-build-template
+    environment:
+      PYTHON: 3.4.8
+      HOMEBREW_NO_AUTO_UPDATE: 1
 
-  #   working_directory: ~/repo
-
-  #   steps:
-
-  #     - restore_cache:
-  #         keys:
-  #           - dist-manylinux-64-{{ .Environment.CIRCLE_SHA1 }}
-
-  #     - restore_cache:
-  #         keys:
-  #           - dist-manylinux-32-{{ .Environment.CIRCLE_SHA1 }}
-
-  #     - run:
-  #         name: create virtualenv
-  #         command: |
-  #           python -m virtualenv env
-
-  #     - run: &install-twine-template
-  #         name: install twine
-  #         command: |
-  #           . env/bin/activate
-  #           pip install twine
-
-  #     # this will fail if version does not match tag
-  #     - run:
-  #         name: install package from source
-  #         command: |
-  #           . env/bin/activate
-  #           pip install /home/circleci/dist/dwave-neal-$CIRCLE_TAG.tar.gz
-
-  #     - run: &init-pypirc-template
-  #         name: init .pypirc
-  #         command: |
-  #           echo -e "[pypi]" >> ~/.pypirc
-  #           echo -e "username = dwtools-ci" >> ~/.pypirc
-  #           echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
-
-  #     - run:
-  #         name: upload
-  #         command: |
-  #           . env/bin/activate
-  #           twine upload /home/circleci/dist/*
-
+  build-osx-2.7:
+    <<: *osx-build-template
+    environment:
+      PYTHON: 2.7.15
+      HOMEBREW_NO_AUTO_UPDATE: 1
 
 workflows:
   version: 2
@@ -399,26 +366,33 @@ workflows:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               only: /.*/
-      # - build-osx-3.7:
-      #     filters:
-      #       tags:
-      #         only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
-      #       branches:
-      #         only: /.*/
+      - build-osx-3.7:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/
       - build-osx-3.6:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               only: /.*/
-
-      # - deploy-manylinux:
-      #     requires:
-      #       - build-manylinux-64
-      #       - build-manylinux-32
-      #     filters:
-      #       tags:
-      #         only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
-      #       branches:
-      #         ignore: /.*/
-
+      - build-osx-3.5:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/
+      - build-osx-3.4:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/
+      - build-osx-2.7:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
+            branches:
+              only: /.*/
