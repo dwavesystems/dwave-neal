@@ -1,7 +1,7 @@
 cython==0.28.2
 
 numpy==1.14.3
-dimod==0.6.12
+dimod>=0.6.5,<0.7.0
 six==1.11.0
 
 coverage
