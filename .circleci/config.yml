@@ -216,14 +216,14 @@ jobs:
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -r requirements.txt
-              "${PYBIN}/pip" wheel . -w ./dist
+              "${PYBIN}/pip" wheel . -w ./wheelhouse
               "${PYBIN}/python" setup.py sdist -d ./dist
             done
 
       - run:
           name: bundle shared libraries into wheels
           command: |
-            for whl in ./dist/dwave*neal*.whl; do
+            for whl in ./wheelhouse/dwave*neal*.whl; do
               auditwheel repair "$whl" -w ./dist
             done
 
@@ -250,7 +250,7 @@ jobs:
           command: |
             . env/bin/activate
             python -m pip install twine
-            twine upload --skip-existing dist/*
+            twine upload --skip-existing ./dist/*
 
   build-manylinux-32:
     <<: *manylinux-template
