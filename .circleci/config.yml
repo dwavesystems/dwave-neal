@@ -43,17 +43,15 @@ jobs:
             . env/bin/activate
             python --version
             coverage run -m unittest discover
-            coverage html
 
       - store_artifacts:
           path: ./htmlcov
 
       - run:
-          # requires COVERALLS_REPO_TOKEN env variable
-          name: coveralls
+          name: codecov
           command: |
             . env/bin/activate
-            if [[ -v COVERALLS_REPO_TOKEN ]]; then coveralls; fi
+            codecov
 
       - run:
           name: doctest

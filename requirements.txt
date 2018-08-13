@@ -4,11 +4,13 @@ numpy==1.14.3
 dimod>=0.6.5,<0.7.0
 six==1.11.0
 
+mock
+
 coverage
+codecov
+
 sphinx
 sphinx_rtd_theme
 recommonmark
-mock
-coveralls
 
 ipython
