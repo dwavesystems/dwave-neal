@@ -227,7 +227,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                                                 sweeps_per_beta, beta_schedule,
                                                 seed)
         off = bqm.spin.offset
-        response = dimod.Response.from_matrix(samples, {'energy': [en + off for en in energies]}, vartype=dimod.SPIN)
+        response = dimod.Response.from_samples(samples, {'energy': [en + off for en in energies]},
+                                               info={}, vartype=dimod.SPIN)
 
         return response.change_vartype(bqm.vartype, inplace=True)
 
