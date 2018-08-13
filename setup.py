@@ -66,11 +66,11 @@ if USE_CYTHON:
 packages = ['neal',
             'neal/src']
 
-install_requires = ['dimod>=0.6.5,<0.7.0',
-                    'numpy>=1.14.0,<1.15.0',
+install_requires = ['dimod>=0.7.0,<0.8.0',
+                    'numpy>=1.14.0,<1.16.0',
                     'six>=1.11.0,<2.0.0']
 
-setup_requires = ['numpy>=1.14.0,<1.15.0']
+setup_requires = ['numpy>=1.14.0,<1.16.0']
 
 classifiers = [
     'License :: OSI Approved :: Apache Software License',
