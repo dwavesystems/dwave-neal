@@ -1,8 +1,8 @@
 .. image:: https://img.shields.io/pypi/v/dwave-neal.svg
     :target: https://pypi.python.org/pypi/dwave-neal
 
-.. image:: https://coveralls.io/repos/github/dwavesystems/dwave-neal/badge.svg?branch=master
-    :target: https://coveralls.io/github/dwavesystems/dwave-neal?branch=master
+.. image:: https://codecov.io/gh/dwavesystems/dwave-neal/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/dwavesystems/dwave-neal
 
 .. image:: https://readthedocs.org/projects/dwave-neal/badge/?version=latest
     :target: http://dwave-neal.readthedocs.io/en/latest/?badge=latest
