@@ -108,13 +108,14 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            'num_reads': [],
                            'sweeps': [],
                            'beta_schedule_type': ['beta_shedule_options'],
-                           'seed': []}
+                           'seed': [],
+                           'interrupt_function': []}
         self.properties = {'beta_shedule_options': ('linear', 'geometric')
                            }
 
     @dimod.decorators.bqm_index_labels
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="linear", seed=None):
+               beta_schedule_type="linear", seed=None, interrupt_function=lambda: False):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -143,6 +144,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.
+
+            interrupt_function (function, optional):
+                If provided, interrupt_function is called with no parameters between each sample of
+                simulated annealing. If the function returns True, then simulated annealing will
+                terminate and return with all of the samples and energies found so far.
 
         Returns:
             :obj:`dimod.Response`: A `dimod` :obj:`~dimod.Response` object.
@@ -225,7 +231,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                                                    coupler_starts, coupler_ends,
                                                    coupler_weights,
                                                    sweeps_per_beta, beta_schedule,
-                                                   seed)
+                                                   seed,
+                                                   interrupt_function)
         off = bqm.spin.offset
         response = dimod.Response.from_samples(samples, {'energy': [en + off for en in energies]},
                                                info={}, vartype=dimod.SPIN)
