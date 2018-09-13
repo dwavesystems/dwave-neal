@@ -215,6 +215,8 @@ double get_state_energy(char* state, vector<double> h,
 // @param states a char array of size num_samples * number of variables in the
 //        problem. Will be overwritten by this function as samples are filled
 //        in.
+// @param energies a double array of size num_samples. Will be overwritten by
+//        this function as energies are filled in.
 // @param num_samples the number of samples to get.
 // @param h vector of h or field value on each variable
 // @param coupler_starts an int vector containing the variables of one side of
@@ -228,16 +230,23 @@ double get_state_energy(char* state, vector<double> h,
 //        `beta_schedule`.
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
-// @return A double vector containing the energies of all the states that were
-//         written to `states`.
-vector<double> general_simulated_annealing(char* states, const int num_samples,
-                                           vector<double> h, 
-                                           vector<int> coupler_starts, 
-                                           vector<int> coupler_ends, 
-                                           vector<double> coupler_weights,
-                                           int sweeps_per_beta,
-                                           vector<double> beta_schedule,
-                                           uint64_t seed) {
+// @param interrupt_callback A function that is invoked between each run of simulated annealing
+//        if the function returns True then it will stop running.
+// @param interrupt_function A pointer to contents that are passed to interrupt_callback.
+// @return the number of samples taken. If no interrupt occured, will equal num_samples.
+int general_simulated_annealing(char* states,
+                                double* energies,
+                                const int num_samples,
+                                vector<double> h, 
+                                vector<int> coupler_starts, 
+                                vector<int> coupler_ends, 
+                                vector<double> coupler_weights,
+                                int sweeps_per_beta,
+                                vector<double> beta_schedule,
+                                uint64_t seed,
+                                callback interrupt_callback,
+                                void *interrupt_function)
+{
 
     // TODO 
     // assert len(states) == num_samples*num_vars*sizeof(char)
@@ -267,9 +276,6 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
     // and its jth neighbor
     vector<vector<double>> neighbour_couplings(num_vars);
 
-    // this will store the resulting energy after getting each sample
-    vector<double> energies(num_samples);
-
     // build the degrees, neighbors, and neighbour_couplings vectors by
     // iterating over the inputted coupler vectors
     for (unsigned int cplr = 0; cplr < coupler_starts.size(); cplr++) {
@@ -292,8 +298,10 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
         degrees[v]++;
     }
 
+
     // get the simulated annealing samples
-    for (int sample = 0; sample < num_samples; sample++) {
+    int sample = 0;
+    while (sample < num_samples) {
         // states is a giant spin array that will hold the resulting states for
         // all the samples, so we need to get the location inside that vector
         // where we will store the sample for this sample
@@ -303,12 +311,17 @@ vector<double> general_simulated_annealing(char* states, const int num_samples,
         simulated_annealing_run(state, h, degrees, 
                                 neighbors, neighbour_couplings, 
                                 sweeps_per_beta, beta_schedule);
+
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
                                          coupler_ends, coupler_weights);
+
+        sample++;
+
+        // if interrupt_function returns True, stop sampling
+        if (interrupt_callback(interrupt_function)) break;
     }
 
-    // finally, return the energies vector (note that `states` should contain
-    // all the computed samples)
-    return energies;
+    // return the number of samples we actually took
+    return sample;
 }

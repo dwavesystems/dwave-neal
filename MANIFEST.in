@@ -1,1 +1,2 @@
-recursive-include neal/src *.h *.cpp *.pyx *.pxd
+recursive-include neal/src *.h *.cpp
+recursive-include neal *.pyx *.cpp

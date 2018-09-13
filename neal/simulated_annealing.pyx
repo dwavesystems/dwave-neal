@@ -14,15 +14,36 @@
 #    limitations under the License.
 #
 # ================================================================================================
+from libcpp cimport bool
+from libcpp.vector cimport vector
 
 import numpy as np
 cimport numpy as np
 
-cimport cython_cpu_sa as sa
+
+cdef extern from "cpu_sa.h":
+    ctypedef bool (*callback)(void *function)
+
+    int general_simulated_annealing(
+            char* samples,
+            double* energies,
+            const int num_samples,
+            vector[double] & h,
+            vector[int] & coupler_states,
+            vector[int] & coupler_ends,
+            vector[double] & coupler_weightes,
+            int sweeps_per_beta,
+            vector[double] & beta_schedule,
+            unsigned long long seed,
+            callback interrupt_callback,
+            void *interrupt_function)
+
+
 
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
-                        coupler_weights, sweeps_per_beta, beta_schedule, seed):
+                        coupler_weights, sweeps_per_beta, beta_schedule, seed,
+                        interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -63,12 +84,23 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         parameters are the same, the returned samples will be
         identical.
 
+    interrupt_function: function
+        Should accept no arguments and return a bool. The function is
+        called between samples and if it returns True, simulated annealing
+        will return early with the samples it already has.
+
     Returns
     -------
     samples : numpy.ndarray
-        Returns a 2d numpy array of shape (num_samples
+        A 2D numpy array where each row is a sample.
+
+    energies: np.ndarray
+        The energies.
 
     """
+    if interrupt_function is None:
+        def interrupt_function():
+            return False
 
     num_vars = len(h)
 
@@ -78,15 +110,32 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
-    cdef np.ndarray[char, ndim=1, mode="c"] states_numpy = np.empty(num_samples*num_vars, dtype="b")
-    cdef char* states = &states_numpy[0]
+    cdef np.ndarray[char, ndim=2, mode="c"] states_numpy = np.empty((num_samples, num_vars), dtype=np.int8)
+    cdef char* states = &states_numpy[0, 0]
 
-    energies = sa.general_simulated_annealing(states, num_samples, h,
-                                              coupler_starts, coupler_ends,
-                                              coupler_weights,
-                                              sweeps_per_beta, beta_schedule,
-                                              seed)
+    cdef np.ndarray[double, ndim=1, mode="c"] energies = np.empty(num_samples, dtype=np.float64)
+    cdef double* energies_pointer = &energies[0]
 
-    annealed_states = states_numpy.reshape((num_samples, num_vars))
+    num = general_simulated_annealing(states,
+                                      energies_pointer,
+                                      num_samples,
+                                      h,
+                                      coupler_starts,
+                                      coupler_ends,
+                                      coupler_weights,
+                                      sweeps_per_beta,
+                                      beta_schedule,
+                                      seed,
+                                      interrupt_callback,
+                                      <void*>interrupt_function)
 
-    return annealed_states, np.asarray(energies)
+    # discard the noise if we were interrupted
+    return states_numpy[:num], energies[:num]
+
+
+cdef bool interrupt_callback(void *interrupt_function):
+    try:
+        return (<object>interrupt_function)()
+    except Exception:
+        # if an exception occurs, treat as an interrupt
+        return True

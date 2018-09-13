@@ -17,7 +17,7 @@
 import unittest
 import numpy as np
 
-from neal.src import simulated_annealing
+from neal.simulated_annealing import simulated_annealing
 
 
 class TestSA(unittest.TestCase):
@@ -99,6 +99,34 @@ class TestSA(unittest.TestCase):
                 self.assertFalse(np.array_equal(samples0, previous_sample), "Different seed returned same results")
 
             previous_samples.append(samples0)
+
+    def test_immediate_interrupt(self):
+        num_variables = 5
+        problem = self._sample_fm_problem(num_variables=num_variables)
+
+        # should only get one sample back
+        samples, energies = simulated_annealing(*problem, interrupt_function=lambda: True)
+
+        self.assertEqual(samples.shape, (1, 5))
+        self.assertEqual(energies.shape, (1,))
+
+    def test_5_interrupt(self):
+        num_variables = 5
+        problem = self._sample_fm_problem(num_variables=num_variables)
+
+        count = [1]
+
+        def stop():
+            if count[0] >= 5:
+                return True
+            count[0] += 1
+            return False
+
+        # should only get one sample back
+        samples, energies = simulated_annealing(*problem, interrupt_function=stop)
+
+        self.assertEqual(samples.shape, (5, 5))
+        self.assertEqual(energies.shape, (5,))
 
 
 if __name__ == "__main__":

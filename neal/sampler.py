@@ -29,7 +29,7 @@ import numpy as np
 
 from six import itervalues, iteritems
 
-from neal.src import simulated_annealing
+import neal.simulated_annealing as sa
 
 
 __all__ = ["Neal", "SimulatedAnnealingSampler"]
@@ -108,13 +108,14 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            'num_reads': [],
                            'sweeps': [],
                            'beta_schedule_type': ['beta_shedule_options'],
-                           'seed': []}
+                           'seed': [],
+                           'interrupt_function': []}
         self.properties = {'beta_shedule_options': ('linear', 'geometric')
                            }
 
     @dimod.decorators.bqm_index_labels
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="linear", seed=None):
+               beta_schedule_type="linear", seed=None, interrupt_function=None):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -143,6 +144,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.
+
+            interrupt_function (function, optional):
+                If provided, interrupt_function is called with no parameters between each sample of
+                simulated annealing. If the function returns True, then simulated annealing will
+                terminate and return with all of the samples and energies found so far.
 
         Returns:
             :obj:`dimod.Response`: A `dimod` :obj:`~dimod.Response` object.
@@ -185,6 +191,10 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             error_msg = "'seed' should be an integer between 0 and 2^64 - 1"
             raise ValueError(error_msg)
 
+        if interrupt_function is None:
+            def interrupt_function():
+                return False
+
         num_variables = len(bqm)
 
         # get the Ising linear biases
@@ -221,13 +231,14 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             seed = randint(0, (1 << 64 - 1))
 
         # run the simulated annealing algorithm
-        samples, energies = simulated_annealing(num_reads, h,
-                                                coupler_starts, coupler_ends,
-                                                coupler_weights,
-                                                sweeps_per_beta, beta_schedule,
-                                                seed)
+        samples, energies = sa.simulated_annealing(num_reads, h,
+                                                   coupler_starts, coupler_ends,
+                                                   coupler_weights,
+                                                   sweeps_per_beta, beta_schedule,
+                                                   seed,
+                                                   interrupt_function)
         off = bqm.spin.offset
-        response = dimod.Response.from_samples(samples, {'energy': [en + off for en in energies]},
+        response = dimod.Response.from_samples(samples, {'energy': energies+off},
                                                info={}, vartype=dimod.SPIN)
 
         return response.change_vartype(bqm.vartype, inplace=True)
