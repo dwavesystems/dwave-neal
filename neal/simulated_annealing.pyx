@@ -131,4 +131,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
 
 cdef bool interrupt_callback(void *interrupt_function):
-    return (<object>interrupt_function)()
+    try:
+        return (<object>interrupt_function)()
+    except Exception:
+        # if an exception occurs, treat as an interrupt
+        return True

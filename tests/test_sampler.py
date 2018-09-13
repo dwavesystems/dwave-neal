@@ -165,6 +165,20 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         with self.assertRaises(ValueError):
             sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='asd')
 
+    def test_interrupt_error(self):
+        sampler = Neal()
+        num_vars = 40
+        h = {v: -1 for v in range(num_vars)}
+        J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
+        num_reads = 100
+
+        def f():
+            raise NotImplementedError
+
+        resp = sampler.sample_ising(h, J, num_reads=num_reads, interrupt_function=f)
+
+        self.assertEqual(len(resp), 1)
+
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
     def test_empty_problem(self):
