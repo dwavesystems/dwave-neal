@@ -108,5 +108,4 @@ venv.bak/
 .mypy_cache/
 
 # cython files
-neal/src/simulated_annealing.cpp
-neal/src/cython_cpu_sa.cpp
+neal/simulated_annealing.cpp

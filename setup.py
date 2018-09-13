@@ -53,8 +53,8 @@ else:
 
 
 extensions = [Extension(
-    name='neal.src.simulated_annealing',
-    sources=['./neal/src/simulated_annealing' + ext,
+    name='neal.simulated_annealing',
+    sources=['./neal/simulated_annealing' + ext,
              './neal/src/cpu_sa.cpp'],
     include_dirs=['./neal/src/'],
     language='c++',
@@ -63,8 +63,7 @@ extensions = [Extension(
 if USE_CYTHON:
     extensions = cythonize(extensions, language='c++')
 
-packages = ['neal',
-            'neal/src']
+packages = ['neal']
 
 install_requires = ['dimod>=0.7.0,<0.8.0',
                     'numpy>=1.14.0,<1.16.0',

@@ -29,7 +29,7 @@ import numpy as np
 
 from six import itervalues, iteritems
 
-from neal.src import simulated_annealing
+import neal.simulated_annealing as sa
 
 
 __all__ = ["Neal", "SimulatedAnnealingSampler"]
@@ -221,11 +221,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             seed = randint(0, (1 << 64 - 1))
 
         # run the simulated annealing algorithm
-        samples, energies = simulated_annealing(num_reads, h,
-                                                coupler_starts, coupler_ends,
-                                                coupler_weights,
-                                                sweeps_per_beta, beta_schedule,
-                                                seed)
+        samples, energies = sa.simulated_annealing(num_reads, h,
+                                                   coupler_starts, coupler_ends,
+                                                   coupler_weights,
+                                                   sweeps_per_beta, beta_schedule,
+                                                   seed)
         off = bqm.spin.offset
         response = dimod.Response.from_samples(samples, {'energy': [en + off for en in energies]},
                                                info={}, vartype=dimod.SPIN)

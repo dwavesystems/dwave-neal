@@ -17,7 +17,7 @@
 import unittest
 import numpy as np
 
-from neal.src import simulated_annealing
+from neal.simulated_annealing import simulated_annealing
 
 
 class TestSA(unittest.TestCase):
