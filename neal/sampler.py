@@ -115,7 +115,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
     @dimod.decorators.bqm_index_labels
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="linear", seed=None, interrupt_function=lambda: False):
+               beta_schedule_type="linear", seed=None, interrupt_function=None):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -190,6 +190,10 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         if isinstance(seed, Integral) and not (0 < seed < (2**64 - 1)):
             error_msg = "'seed' should be an integer between 0 and 2^64 - 1"
             raise ValueError(error_msg)
+
+        if interrupt_function is None:
+            def interrupt_function():
+                return False
 
         num_variables = len(bqm)
 

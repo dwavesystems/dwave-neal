@@ -43,7 +43,7 @@ cdef extern from "cpu_sa.h":
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
-                        interrupt_function=lambda: False):
+                        interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -98,6 +98,9 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         The energies.
 
     """
+    if interrupt_function is None:
+        def interrupt_function():
+            return False
 
     num_vars = len(h)
 
