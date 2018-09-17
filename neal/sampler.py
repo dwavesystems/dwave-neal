@@ -238,8 +238,16 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                                                    seed,
                                                    interrupt_function)
         off = bqm.spin.offset
-        response = dimod.Response.from_samples(samples, {'energy': energies+off},
-                                               info={}, vartype=dimod.SPIN)
+        info = {
+            "beta_range": beta_range,
+            "beta_schedule_type": beta_schedule_type
+        }
+        response = dimod.Response.from_samples(
+            samples,
+            {'energy': energies+off},
+            info=info,
+            vartype=dimod.SPIN
+        )
 
         return response.change_vartype(bqm.vartype, inplace=True)
 
@@ -258,17 +266,21 @@ def _default_ising_beta_range(h, J):
     Assume each variable in J is also in h.
 
     """
-    beta_range = [.1]
-
-    sigmas = {v: abs(h[v]) for v in range(len(h))}
-    for u, v in J:
-        sigmas[u] += abs(J[(u, v)])
-        sigmas[v] += abs(J[(u, v)])
+    bias_sum = 0.0
+    sigmas = {}
+    for v, b in iteritems(h):
+        bias_sum += b**2
+        sigmas[v] = abs(b)
+    for (u, v), b in iteritems(J):
+        bias_sum += b**2
+        abs_b = abs(b)
+        sigmas[u] += abs_b
+        sigmas[v] += abs_b
 
     if len(sigmas) > 0:
-        beta_range.append(2 * max(itervalues(sigmas)))
+        beta_range = [1.0/np.sqrt(bias_sum), 3.0/(max(itervalues(sigmas)))]
     else:
         # completely empty problem, so beta_range doesn't matter
-        beta_range.append(1.0)
+        beta_range = [0.1, 1.0]
 
     return beta_range
