@@ -4,8 +4,8 @@
 .. image:: https://codecov.io/gh/dwavesystems/dwave-neal/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/dwavesystems/dwave-neal
 
-.. image:: https://readthedocs.org/projects/dwave-neal/badge/?version=latest
-    :target: http://dwave-neal.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.com/projects/d-wave-systems-dwave-neal/badge/?version=latest
+    :target: https://docs.ocean.dwavesys.com/projects/neal/en/latest/?badge=latest
 
 .. image:: https://ci.appveyor.com/api/projects/status/ihbwp21xu06h9upc/branch/master?svg=true
     :target: https://ci.appveyor.com/project/dwave-adtt/dwave-neal
