@@ -109,13 +109,14 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            'sweeps': [],
                            'beta_schedule_type': ['beta_shedule_options'],
                            'seed': [],
-                           'interrupt_function': []}
+                           'interrupt_function': [],
+                           'initial_states': []}
         self.properties = {'beta_shedule_options': ('linear', 'geometric')
                            }
 
-    @dimod.decorators.bqm_index_labels
-    def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="linear", seed=None, interrupt_function=None):
+    def sample(self, _bqm, beta_range=None, num_reads=10, sweeps=1000,
+               beta_schedule_type="linear", seed=None, interrupt_function=None,
+               initial_states=None):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -144,6 +145,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.
+
+            initial_states (tuple(numpy.ndarray, dict), optional):
+                A tuple where the first value is a numpy array of initial states to seed the
+                simulated annealing runs, and the second is a dict defining a linear variable
+                labelling.
 
             interrupt_function (function, optional):
                 If provided, interrupt_function is called with no parameters between each sample of
@@ -176,7 +182,20 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         """
 
-        # bqm is checked by decorator which also ensures that the variables are index-labelled
+        # if already index-labelled, just continue
+        if all(v in _bqm.linear for v in range(len(_bqm))):
+            bqm = _bqm
+            use_label_map = False
+        else:
+            try:
+                inverse_mapping = dict(enumerate(sorted(_bqm.linear)))
+            except TypeError:
+                # in python3 unlike types cannot be sorted
+                inverse_mapping = dict(enumerate(_bqm.linear))
+            mapping = {v: i for i, v in iteritems(inverse_mapping)}
+
+            bqm = _bqm.relabel_variables(mapping, inplace=False)
+            use_label_map = True
 
         # beta_range, sweeps are handled by simulated_annealing
 
@@ -230,12 +249,29 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             # pick a random seed
             seed = randint(0, (1 << 64 - 1))
 
+        np_rand = np.random.RandomState(seed % 2**32)
+
+        states_shape = (num_reads, num_variables)
+
+        if initial_states is not None:
+            initial_states_array, init_label_map = initial_states
+            if not initial_states_array.shape == states_shape:
+                raise ValueError("`initial_states` must have shape "
+                                 "{}".format(states_shape))
+            if init_label_map is not None:
+                get_label = inverse_mapping.get if use_label_map else lambda i: i
+                initial_states_array = initial_states_array[:, [init_label_map[get_label(i)] for i in range(num_variables)]]
+            numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
+        else:
+            numpy_initial_states = 2*np_rand.randint(2, size=(num_reads, num_variables)).astype(np.int8) - 1
+
         # run the simulated annealing algorithm
         samples, energies = sa.simulated_annealing(num_reads, h,
                                                    coupler_starts, coupler_ends,
                                                    coupler_weights,
                                                    sweeps_per_beta, beta_schedule,
                                                    seed,
+                                                   numpy_initial_states,
                                                    interrupt_function)
         off = bqm.spin.offset
         info = {
@@ -248,8 +284,12 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             info=info,
             vartype=dimod.SPIN
         )
-
-        return response.change_vartype(bqm.vartype, inplace=True)
+        
+        response.change_vartype(bqm.vartype, inplace=True)
+        if use_label_map:
+            response.relabel_variables(inverse_mapping, inplace=True)
+        
+        return response
 
 
 Neal = SimulatedAnnealingSampler
