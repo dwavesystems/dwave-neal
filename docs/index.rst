@@ -30,9 +30,16 @@ Documentation
   :caption: D-Wave's Ocean Software
   :maxdepth: 1
 
-  dwave
   ocean
   contributing
+
+.. toctree::
+  :caption: D-Wave
+  :maxdepth: 1
+
+  dwave
+  leap
+  sysdocs
 
 Indices and tables
 ------------------
