@@ -43,6 +43,7 @@ cdef extern from "cpu_sa.h":
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
+                        np.ndarray[char, ndim=2, mode="c"] states_numpy,
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -84,6 +85,10 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         parameters are the same, the returned samples will be
         identical.
 
+    states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
+        The initial seeded states of the simulated annealing runs. Should be of
+        shape (num_samples, num_variables).
+
     interrupt_function: function
         Should accept no arguments and return a bool. The function is
         called between samples and if it returns True, simulated annealing
@@ -110,7 +115,6 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
-    cdef np.ndarray[char, ndim=2, mode="c"] states_numpy = np.empty((num_samples, num_vars), dtype=np.int8)
     cdef char* states = &states_numpy[0, 0]
 
     cdef np.ndarray[double, ndim=1, mode="c"] energies = np.empty(num_samples, dtype=np.float64)

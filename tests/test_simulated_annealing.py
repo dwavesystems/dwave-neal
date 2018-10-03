@@ -32,8 +32,11 @@ class TestSA(unittest.TestCase):
         sweeps_at_beta = 1
         seed = 1
 
+        np_rand = np.random.RandomState(1234)
+        initial_states = 2*np_rand.randint(2, size=(num_samples, num_variables)).astype(np.int8) - 1
+
         return (num_samples, h, coupler_starts, coupler_ends, coupler_weights,
-                sweeps_at_beta, beta_schedule, seed)
+                sweeps_at_beta, beta_schedule, seed, initial_states)
 
     def test_submit_problem(self):
         num_variables, num_samples = 10, 100
@@ -82,21 +85,38 @@ class TestSA(unittest.TestCase):
     def test_seed(self):
         # no need to do a bunch of sweeps, in fact the less we do the more
         # sure we can be that the same seed is returning the same result
-        problem = self._sample_fm_problem(num_variables=40, num_samples=1000, num_sweeps=10)
+        # problem = self._sample_fm_problem(num_variables=40, num_samples=1000, num_sweeps=10)
+        num_variables, num_sweeps, num_samples = 100, 10, 1000
+        h = [0]*num_variables
+        (coupler_starts,
+         coupler_ends,
+         coupler_weights) = zip(*((u, v, 1) for u in range(num_variables)
+                                  for v in range(u, num_variables)))
 
-        # no need to do a bunch of sweeps, in fact the less we do the more
-        # sure we can be that the same seed is returning the same result
+        beta_schedule = np.linspace(0.3, 0.4, num=num_sweeps)
+        sweeps_at_beta = 1
+
+        np_rand = np.random.RandomState(1234)
+        initial_states = np_rand.randint(1, size=(num_samples, num_variables))
+        initial_states = 2*initial_states.astype(np.int8) - 1
 
         previous_samples = []
         for seed in (1, 40, 235, 152436, 3462354, 92352355):
-            seeded_problem = problem[:-1] + (seed,)
-            samples0, _ = simulated_annealing(*seeded_problem)
-            samples1, _ = simulated_annealing(*seeded_problem)
+            samples0, _ = simulated_annealing(num_samples, h, coupler_starts,
+                                              coupler_ends, coupler_weights,
+                                              sweeps_at_beta, beta_schedule,
+                                              seed, np.copy(initial_states))
+            samples1, _ = simulated_annealing(num_samples, h, coupler_starts,
+                                              coupler_ends, coupler_weights,
+                                              sweeps_at_beta, beta_schedule,
+                                              seed, np.copy(initial_states))
 
-            self.assertTrue(np.array_equal(samples0, samples1), "Same seed returned different results")
+            self.assertTrue(np.array_equal(samples0, samples1),
+                            "Same seed returned different results")
 
             for previous_sample in previous_samples:
-                self.assertFalse(np.array_equal(samples0, previous_sample), "Different seed returned same results")
+                self.assertFalse(np.array_equal(samples0, previous_sample),
+                                 "Different seed returned same results")
 
             previous_samples.append(samples0)
 
@@ -127,6 +147,30 @@ class TestSA(unittest.TestCase):
 
         self.assertEqual(samples.shape, (5, 5))
         self.assertEqual(energies.shape, (5,))
+
+    def test_initial_states(self):
+        num_variables, num_sweeps, num_samples = 100, 0, 1000
+        h = [0]*num_variables
+        (coupler_starts,
+         coupler_ends,
+         coupler_weights) = zip(*((u, v, 1) for u in range(num_variables)
+                                  for v in range(u, num_variables)))
+
+        beta_schedule = np.linspace(0.3, 0.4, num=num_sweeps)
+        sweeps_at_beta = 1
+        seed = 1234567890
+
+        np_rand = np.random.RandomState(1234)
+        initial_states = np_rand.randint(1, size=(num_samples, num_variables))
+        initial_states = 2*initial_states.astype(np.int8) - 1
+
+        samples, _ = simulated_annealing(num_samples, h, coupler_starts,
+                                         coupler_ends, coupler_weights,
+                                         sweeps_at_beta, beta_schedule,
+                                         seed, np.copy(initial_states))
+
+        self.assertTrue(np.array_equal(initial_states, samples),
+                        "Initial states do not match samples with 0 sweeps")
 
 
 if __name__ == "__main__":

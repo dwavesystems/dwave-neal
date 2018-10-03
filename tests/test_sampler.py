@@ -17,6 +17,7 @@
 import unittest
 import numpy as np
 import copy
+import itertools
 
 import dimod
 
@@ -178,6 +179,28 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         resp = sampler.sample_ising(h, J, num_reads=num_reads, interrupt_function=f)
 
         self.assertEqual(len(resp), 1)
+
+    def test_initial_states(self):
+        sampler = Neal()
+        var_labels = ["a", "b", "c", "d"]
+        num_vars = len(var_labels)
+        h = {v: -1 for v in var_labels}
+        J = {(u, v): 1 for u, v in itertools.combinations(var_labels, 2)}
+        num_reads = 100
+        seed = 1234567890
+
+        np_rand = np.random.RandomState(seed)
+        initial_state_array = 2*np_rand.randint(2, size=(num_reads, num_vars)) - 1
+        init_labels = dict(zip(var_labels, np_rand.permutation(num_vars)))
+
+        resp = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=0, seed=seed, 
+                                    initial_states=(initial_state_array, init_labels))
+
+        for v in var_labels:
+            self.assertTrue(np.array_equal(resp.record.sample[:, resp.label_to_idx[v]], 
+                                           initial_state_array[:, init_labels[v]]),
+                            "Samples were not the same as initial states with "
+                            "no sweeps")
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):

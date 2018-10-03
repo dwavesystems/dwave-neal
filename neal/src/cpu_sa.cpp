@@ -71,8 +71,8 @@ double get_flip_energy(int var, char *state, vector<double> & h,
 
 // Performs a single run of simulated annealing with the given inputs.
 // @param state a signed char array where each char holds the state of a
-//        variable. Note that this can be unitialized as it will be randomly
-//        set at the beginning of this function.
+//        variable. Note that this will be used as the initial state of the
+//        run.
 // @param h vector of h or field value on each variable
 // @param degrees the degree of each variable
 // @param neighbors lists of the neighbors of each variable, such that 
@@ -98,18 +98,7 @@ void simulated_annealing_run(char* state, vector<double>& h,
     // delta_energy[v] is the delta energy for variable `v`
     double *delta_energy = (double*)malloc(num_vars * sizeof(double));
 
-    // start with a random state
     uint64_t rand; // this will hold the value of the rng
-    for (int var = 0; var < num_vars; var++) {
-        int spin_mod = var % 64;
-        if (spin_mod == 0) {
-            // get a new 64 bit number
-            FASTRAND(rand);
-        }
-        // rand >> spin_mod) & 1 gets a bit from the random number
-        // 2*bit - 1 turns the random bit into +-1
-        state[var] = 2*((rand >> spin_mod) & 1) - 1;
-    }
 
     // build the delta_energy array by getting the delta energy for each
     // variable
@@ -214,7 +203,8 @@ double get_state_energy(char* state, vector<double> h,
 // Perform simulated annealing on a general problem
 // @param states a char array of size num_samples * number of variables in the
 //        problem. Will be overwritten by this function as samples are filled
-//        in.
+//        in. The initial state of the samples are used to seed the simulated
+//        annealing runs.
 // @param energies a double array of size num_samples. Will be overwritten by
 //        this function as energies are filled in.
 // @param num_samples the number of samples to get.
