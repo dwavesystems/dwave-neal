@@ -85,7 +85,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
-        ['beta_shedule_options']
+        ['beta_schedule_options']
 
     """
 
@@ -97,7 +97,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         >>> import neal
         >>> sampler = neal.SimulatedAnnealingSampler()
-        >>> sampler.properties['beta_shedule_options']
+        >>> sampler.properties['beta_schedule_options']
         ('linear', 'geometric')
 
     """
@@ -107,11 +107,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         self.parameters = {'beta_range': [],
                            'num_reads': [],
                            'sweeps': [],
-                           'beta_schedule_type': ['beta_shedule_options'],
+                           'beta_schedule_type': ['beta_schedule_options'],
                            'seed': [],
                            'interrupt_function': [],
                            'initial_states': []}
-        self.properties = {'beta_shedule_options': ('linear', 'geometric')
+        self.properties = {'beta_schedule_options': ('linear', 'geometric')
                            }
 
     def sample(self, _bqm, beta_range=None, num_reads=10, sweeps=1000,
