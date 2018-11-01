@@ -238,7 +238,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             beta_schedule = np.linspace(*beta_range, num=num_betas)
         elif beta_schedule_type == "geometric":
             # interpolate a geometric beta schedule
-            beta_schedule = np.logspace(*np.log(beta_range), num=num_betas)
+            beta_schedule = np.geomspace(*beta_range, num=num_betas)
         else:
             raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
@@ -314,13 +314,13 @@ def _default_ising_beta_range(h, J):
         bias_sum += b**2
         abs_b = abs(b)
         sigmas[v] = abs_b
-        min_bias = min(abs_b if abs_b != 0 else float("inf"), min_bias)
+        min_bias = min(abs_b or float("inf"), min_bias)
     for (u, v), b in iteritems(J):
         bias_sum += b**2
         abs_b = abs(b)
         sigmas[u] += abs_b
         sigmas[v] += abs_b
-        min_bias = min(abs_b if abs_b != 0 else float("inf"), min_bias)
+        min_bias = min(abs_b or float("inf"), min_bias)
 
     if len(sigmas) > 0:
         beta_range = [1.0/np.sqrt(bias_sum), 5.0/min_bias]
