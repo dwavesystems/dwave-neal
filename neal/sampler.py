@@ -115,8 +115,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            }
 
     def sample(self, _bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="linear", seed=None, interrupt_function=None,
-               initial_states=None):
+               beta_schedule_type="geometric", seed=None,
+               interrupt_function=None, initial_states=None):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -134,7 +134,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             sweeps (int, optional, default=1000):
                 Number of sweeps or steps.
 
-            beta_schedule_type (string, optional, default='linear'):
+            beta_schedule_type (string, optional, default='geometric'):
                 Beta schedule type, or how the beta values are interpolated between
                 the given 'beta_range'. Supported values are:
 
