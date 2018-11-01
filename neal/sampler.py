@@ -235,13 +235,10 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         num_betas = int(math.ceil(sweeps / sweeps_per_beta))
         if beta_schedule_type == "linear":
             # interpolate a linear beta schedule
-            beta_step = (beta_range[1] - beta_range[0]) / float(num_betas)
-            beta_schedule = [beta_range[0] + s * beta_step
-                             for s in range(num_betas)]
+            beta_schedule = np.linspace(*beta_range, num=num_betas)
         elif beta_schedule_type == "geometric":
-            beta_step = (beta_range[1] / beta_range[0]) ** (1.0 / num_betas)
-            beta_schedule = [beta_range[0] * beta_step ** i
-                             for i in range(num_betas)]
+            # interpolate a geometric beta schedule
+            beta_schedule = np.logspace(*np.log(beta_range), num=num_betas)
         else:
             raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
@@ -305,20 +302,28 @@ def _default_ising_beta_range(h, J):
 
     Assume each variable in J is also in h.
 
+    We shoot for a final normalized beta of 10. We use the minimum bias to
+    give a lower bound on the minimum energy gap, such at the final sweeps
+    we are highly likely to settle into the current valley.
     """
+
     bias_sum = 0.0
     sigmas = {}
+    min_bias = float("inf")
     for v, b in iteritems(h):
         bias_sum += b**2
-        sigmas[v] = abs(b)
+        abs_b = abs(b)
+        sigmas[v] = abs_b
+        min_bias = min(abs_b if abs_b != 0 else float("inf"), min_bias)
     for (u, v), b in iteritems(J):
         bias_sum += b**2
         abs_b = abs(b)
         sigmas[u] += abs_b
         sigmas[v] += abs_b
+        min_bias = min(abs_b if abs_b != 0 else float("inf"), min_bias)
 
     if len(sigmas) > 0:
-        beta_range = [1.0/np.sqrt(bias_sum), 3.0/(max(itervalues(sigmas)))]
+        beta_range = [1.0/np.sqrt(bias_sum), 5.0/min_bias]
     else:
         # completely empty problem, so beta_range doesn't matter
         beta_range = [0.1, 1.0]
