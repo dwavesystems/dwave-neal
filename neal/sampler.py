@@ -314,16 +314,16 @@ def _default_ising_beta_range(h, J):
     abs_J = [abs(jj) for jj in J.values() if jj != 0]
 
     max_delta_energy = sum([sum(abs_h), sum(abs_J)])
-    
-    min_delta_energy = min(min(abs_h), min(abs_J))
-    
+    min_delta_energy = min(min(abs_h), min(abs_J))  # Rough approximation of min delta energy
+   
+    # Selecting betas based on probability of flipping a qubit
+    # Hot temp: When we get max change in energy, we want at least 50% of flipping
+    #   0.50 = RANDMAX * exp(-hot_beta * max_delta_energy)
+    #
+    # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
+    #   energy, chance of flipping is set to 1%
+    #   0.01 = RANDMAX * exp(-cold_beta * min_delta_energy)
     hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
     cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
-    
-    return [hot_beta, cold_beta]
 
-if __name__ == "__main__":
-    bqm = dimod.BinaryQuadraticModel({'longJob_2,2': -1.5, 'longJob_0,1': -2.0, 'small1_0,0': -1.96875, 'small2_0,2': 0.0, 'longJob_2,1': 0.125, 'longJob_0,3': -2.0, 'small2_0,1': -1.5, 'longJob_1,1': -2.0, 'longJob_1,2': -2.0, 'small2_0,0': -1.875, 'longJob_0,0': -2.0, 'small1_0,3': 0.0, 'small1_0,2': -1.5, 'longJob_2,0': 0.03125, 'small1_0,1': -1.875, 'longJob_2,3': 0.0, 'longJob_1,3': -2.0, 'longJob_0,2': -2.0}, {('small1_0,2', 'small1_0,1'): 4.0, ('small1_0,3', 'small1_0,0'): 4.0, ('small2_0,1', 'small2_0,0'): 4.0, ('longJob_0,1', 'longJob_0,0'): 4.0, ('longJob_1,2', 'longJob_0,2'): 2, ('longJob_0,2', 'longJob_1,1'): 2, ('longJob_2,3', 'longJob_1,3'): 2, ('small2_0,2', 'small2_0,0'): 4.0, ('small2_0,1', 'longJob_2,2'): 2, ('longJob_0,3', 'longJob_1,2'): 2, ('longJob_2,3', 'longJob_2,2'): 4.0, ('small1_0,3', 'longJob_1,3'): 4, ('small1_0,1', 'small1_0,0'): 4.0, ('longJob_0,2', 'longJob_0,1'): 4.0, ('longJob_0,3', 'longJob_0,2'): 4.0, ('longJob_1,1', 'small1_0,1'): 4, ('longJob_1,3', 'longJob_1,2'): 4.0, ('longJob_2,3', 'small2_0,2'): 2, ('small2_0,2', 'small2_0,1'): 4.0, ('longJob_0,3', 'longJob_0,1'): 4.0, ('small1_0,3', 'small1_0,1'): 4.0, ('longJob_0,3', 'longJob_1,1'): 2, ('small1_0,2', 'small1_0,0'): 4.0, ('longJob_1,2', 'longJob_1,1'): 4.0, ('longJob_2,2', 'small2_0,2'): 4, ('longJob_0,3', 'longJob_1,3'): 2, ('longJob_1,2', 'longJob_2,2'): 2, ('longJob_0,1', 'longJob_1,1'): 2, ('longJob_1,2', 'small1_0,2'): 4, ('longJob_1,3', 'longJob_2,2'): 2, ('longJob_0,2', 'longJob_0,0'): 4.0, ('longJob_0,3', 'longJob_0,0'): 4.0, ('longJob_1,3', 'longJob_1,1'): 4.0, ('small1_0,3', 'small1_0,2'): 4.0}, 9.0, dimod.BINARY)
-    sampler = SimulatedAnnealingSampler()
-    response = sampler.sample(bqm)
-    print(next(response.data()))
+    return [hot_beta, cold_beta]
