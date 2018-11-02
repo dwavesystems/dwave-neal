@@ -313,7 +313,7 @@ def _default_ising_beta_range(h, J):
     abs_h = [abs(hh) for hh in h.values() if hh != 0]
     abs_J = [abs(jj) for jj in J.values() if jj != 0]
 
-    max_delta_energy = sum([sum(abs_h), sum(abs_J)])
+    max_delta_energy = sum([sum(abs_h), sum(abs_J)])  # Loose upperbound TODO: tighten bound
     min_delta_energy = min(min(abs_h), min(abs_J))  # Rough approximation of min delta energy
    
     # Selecting betas based on probability of flipping a qubit
