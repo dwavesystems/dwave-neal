@@ -308,14 +308,15 @@ def _default_ising_beta_range(h, J):
     """
     RANDMAX = (1 << 32) - 1  # Need to double check this value; TODO: don't hardcode like this.
 
-    if not h and not J:
-    	return [0.1, 1.0]
-    
     abs_h = [abs(hh) for hh in h.values() if hh != 0]
     abs_J = [abs(jj) for jj in J.values() if jj != 0]
 
-    max_delta_energy = sum([sum(abs_h), sum(abs_J)])  # Loose upperbound TODO: tighten bound
-    min_delta_energy = min(min(abs_h), min(abs_J))  # Rough approximation of min delta energy
+    if not abs_h and not abs_J:
+        return [0.1, 1.0]
+
+    biases = abs_h + abs_J
+    max_delta_energy = sum(biases)  # Loose upperbound TODO: tighten bound
+    min_delta_energy = min(biases)  # Rough approximation of min delta energy
    
     # Selecting betas based on probability of flipping a qubit
     # Hot temp: When we get max change in energy, we want at least 50% of flipping
