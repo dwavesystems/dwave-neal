@@ -306,7 +306,8 @@ def _default_ising_beta_range(h, J):
     give a lower bound on the minimum energy gap, such at the final sweeps
     we are highly likely to settle into the current valley.
     """
-    RANDMAX = 4294967295  # Need to double check this value; also, don't hardcode like this.
+    RANDMAX = (1 << 32) - 1  # Need to double check this value; TODO: don't hardcode like this.
+
     if not h and not J:
     	return [0.1, 1.0]
     
@@ -325,5 +326,6 @@ def _default_ising_beta_range(h, J):
     #   0.01 = RANDMAX * exp(-cold_beta * min_delta_energy)
     hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
     cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
+    print(hot_beta, cold_beta)
 
     return [hot_beta, cold_beta]

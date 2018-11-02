@@ -208,5 +208,91 @@ class TestDefaultIsingBetaRange(unittest.TestCase):
         self.assertEqual(neal.sampler._default_ising_beta_range({}, {}), [.1, 1.0])
 
 
+class TestHeuristicResponse(unittest.TestCase):
+    def test_job_shop_scheduling(self):
+        # Set up a job shop scheduling BQM
+        #
+        # Provide hardcode version of the bqm of "jobs"
+        #   jobs = {'b': [(1,1), (3,1)],
+        #           'o': [(2,2), (4,1)],
+        #           'g': [(1,2)]}
+        #
+		#   There are three jobs: 'b', 'o', 'g'
+        #   Each tuple represents a task that runs on a particular machine for a given amount of
+        #   time. I.e. (machine_id, duration_on_machine)
+        #
+        #   Variables below are labelled as '<job_name>_<task_index>,<task_start_time>'.
+        linear = {'b_0,0': -2.0,
+                  'b_0,1': -2.0,
+                  'b_0,2': -2.0,
+                  'b_0,3': -2.0,
+                  'b_1,0': 0.125,
+                  'b_1,1': -1.5,
+                  'b_1,2': 0.0,
+                  'g_0,0': -1.875,
+                  'g_0,1': -1.5,
+                  'g_0,2': 0.0,
+                  'o_0,0': -2.0,
+                  'o_0,1': -2.0,
+                  'o_0,2': -2.0,
+                  'o_1,0': 0.03125,
+                  'o_1,1': -1.875,
+                  'o_1,2': -1.5,
+                  'o_1,3': 0.0}
+
+        quadratic = {('b_0,0', 'g_0,0'): 4,
+                     ('b_0,1', 'b_0,0'): 4.0,
+                     ('b_0,1', 'g_0,0'): 2,
+                     ('b_0,2', 'b_0,0'): 4.0,
+                     ('b_0,2', 'b_0,1'): 4.0,
+                     ('b_0,2', 'b_1,2'): 2,
+                     ('b_0,2', 'g_0,1'): 2,
+                     ('b_0,2', 'g_0,2'): 4,
+                     ('b_0,3', 'b_0,0'): 4.0,
+                     ('b_0,3', 'b_0,1'): 4.0,
+                     ('b_0,3', 'b_0,2'): 4.0,
+                     ('b_0,3', 'b_1,2'): 2,
+                     ('b_0,3', 'g_0,2'): 2,
+                     ('b_1,1', 'b_0,1'): 2,
+                     ('b_1,1', 'b_0,2'): 2,
+                     ('b_1,1', 'b_0,3'): 2,
+                     ('b_1,1', 'b_1,2'): 4.0,
+                     ('g_0,1', 'b_0,1'): 4,
+                     ('g_0,1', 'g_0,0'): 4.0,
+                     ('g_0,2', 'g_0,0'): 4.0,
+                     ('g_0,2', 'g_0,1'): 4.0,
+                     ('o_0,0', 'o_1,1'): 2,
+                     ('o_0,1', 'o_0,0'): 4.0,
+                     ('o_0,1', 'o_1,1'): 2,
+                     ('o_0,1', 'o_1,2'): 2,
+                     ('o_0,2', 'o_0,0'): 4.0,
+                     ('o_0,2', 'o_0,1'): 4.0,
+                     ('o_0,2', 'o_1,1'): 2,
+                     ('o_1,2', 'o_0,2'): 2,
+                     ('o_1,2', 'o_1,1'): 4.0,
+                     ('o_1,3', 'o_0,2'): 2,
+                     ('o_1,3', 'o_1,1'): 4.0,
+                     ('o_1,3', 'o_1,2'): 4.0}
+
+        jss_bqm = dimod.BinaryQuadraticModel(linear, quadratic, 9.0, dimod.BINARY)
+
+        # Optimal energy
+        optimal_solution = {'b_0,0': 1, 'b_0,1': 0, 'b_0,2': 0, 'b_0,3': 0,
+                            'b_1,0': 0, 'b_1,1': 1, 'b_1,2': 0, 'b_1,3': 0,
+                            'g_0,0': 0, 'g_0,1': 1, 'g_0,2': 0, 'g_0,3': 0,
+                            'o_0,0': 1, 'o_0,1': 0, 'o_0,2': 0, 'o_0,3': 0,
+                            'o_1,0': 0, 'o_1,1': 0, 'o_1,2': 1, 'o_1,3': 0}
+        optimal_energy = jss_bqm.energy(optimal_solution) # Evaluates to 0.5
+
+        # Get heuristic solution
+        sampler = Neal()
+        response = sampler.sample(jss_bqm, beta_schedule_type="geometric")
+        _, response_energy, _ = next(response.data())
+
+        # Compare energies
+        threshold = 0.1	 # Arbitrary threshold
+        self.assertLess(response_energy, optimal_energy + threshold)
+
+
 if __name__ == "__main__":
     unittest.main()
