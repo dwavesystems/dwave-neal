@@ -294,6 +294,7 @@ class TestHeuristicResponse(unittest.TestCase):
         self.assertLess(response_energy, optimal_energy + threshold)
 
     def test_cubic_lattice(self):
+        # Set up all lattice edges in a cube. Each edge is labelled by a 3-D coordinate system
         def get_cubic_lattice_edges(N):
             for x, y, z in itertools.product(range(N), repeat=3):
                 u = x, y, z
@@ -301,13 +302,19 @@ class TestHeuristicResponse(unittest.TestCase):
                 yield u, (x, (y+1)%N, z)
                 yield u, (x, y, (z+1)%N)
 
-        #TODO: increase N to 12
-        #TODO: figure out ideal energy level
-        J = {e: np.random.choice((-1, 1)) for e in get_cubic_lattice_edges(3)}
+        # Add a J-bias to each edge
+        np_rand = np.random.RandomState(128)
+        J = {e: np_rand.choice((-1, 1)) for e in get_cubic_lattice_edges(12)}
+
+        # Solve ising problem
         sampler = Neal()
         response = sampler.sample_ising({}, J, beta_schedule_type="geometric")
         _, response_energy, _ = next(response.data())
-        print("response_energy: ", response_energy)
+
+        #TODO: compare Neal with Orang's best solution
+        threshold = -3000
+
+        self.assertLess(response_energy, threshold, "response_energy, {}, exceeds threshold".format(response_energy))
 
 
 if __name__ == "__main__":

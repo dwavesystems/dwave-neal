@@ -141,7 +141,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 * linear
                 * geometric
 
-            seed (int, optional):
+                seed (int, optional):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.
@@ -327,6 +327,5 @@ def _default_ising_beta_range(h, J):
     #   0.01 = RANDMAX * exp(-cold_beta * min_delta_energy)
     hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
     cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
-    print(hot_beta, cold_beta)
 
     return [hot_beta, cold_beta]
