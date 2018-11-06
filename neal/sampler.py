@@ -24,7 +24,6 @@ import math
 from numbers import Integral
 from random import randint
 
-import copy
 import dimod
 import numpy as np
 
