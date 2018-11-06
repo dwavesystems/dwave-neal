@@ -209,7 +209,7 @@ class TestDefaultIsingBetaRange(unittest.TestCase):
 
 
 class TestHeuristicResponse(unittest.TestCase):
-    def test_job_shop_scheduling(self):
+    def test_job_shop_scheduling_with_linear(self):
         # Set up a job shop scheduling BQM
         #
         # Provide hardcode version of the bqm of "jobs"
@@ -286,14 +286,14 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Get heuristic solution
         sampler = Neal()
-        response = sampler.sample(jss_bqm, beta_schedule_type="geometric")
+        response = sampler.sample(jss_bqm, beta_schedule_type="linear")
         _, response_energy, _ = next(response.data())
 
         # Compare energies
         threshold = 0.1	 # Arbitrary threshold
         self.assertLess(response_energy, optimal_energy + threshold)
 
-    def test_cubic_lattice(self):
+    def test_cubic_lattice_with_geometric(self):
         # Set up all lattice edges in a cube. Each edge is labelled by a 3-D coordinate system
         def get_cubic_lattice_edges(N):
             for x, y, z in itertools.product(range(N), repeat=3):
@@ -311,10 +311,10 @@ class TestHeuristicResponse(unittest.TestCase):
         response = sampler.sample_ising({}, J, beta_schedule_type="geometric")
         _, response_energy, _ = next(response.data())
 
-        #TODO: compare Neal with Orang's best solution
+        # Note: lowest energy found was -3088 with a different benchmarking tool
         threshold = -3000
-
-        self.assertLess(response_energy, threshold, "response_energy, {}, exceeds threshold".format(response_energy))
+        self.assertLess(response_energy, threshold, ("response_energy, {}, exceeds "
+            "threshold").format(response_energy))
 
 
 if __name__ == "__main__":

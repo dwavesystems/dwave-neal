@@ -24,6 +24,7 @@ import math
 from numbers import Integral
 from random import randint
 
+import copy
 import dimod
 import numpy as np
 
@@ -310,14 +311,24 @@ def _default_ising_beta_range(h, J):
 
     abs_h = [abs(hh) for hh in h.values() if hh != 0]
     abs_J = [abs(jj) for jj in J.values() if jj != 0]
+    abs_biases = abs_h + abs_J
 
-    if not abs_h and not abs_J:
+    # Case where biases are all zero or do not exist
+    if not abs_biases:
         return [0.1, 1.0]
 
-    biases = abs_h + abs_J
-    max_delta_energy = sum(biases)  # Loose upperbound TODO: tighten bound
-    min_delta_energy = min(biases)  # Rough approximation of min delta energy
+    # Rough approximation of min change in energy
+    min_delta_energy = min(abs_biases)
    
+    # Combine absolute biases by variable
+    abs_bias_dict = {k: abs(v) for k, v in h.items()}
+    for (k1, k2), v in J.items():
+        abs_bias_dict[k1] += abs(v)
+        abs_bias_dict[k2] += abs(v)
+
+    # Find max change in energy
+    max_delta_energy = sum(abs_biases) - min(abs_bias_dict.values())
+
     # Selecting betas based on probability of flipping a qubit
     # Hot temp: When we get max change in energy, we want at least 50% of flipping
     #   0.50 = RANDMAX * exp(-hot_beta * max_delta_energy)
