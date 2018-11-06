@@ -307,13 +307,11 @@ def _default_ising_beta_range(h, J):
     give a lower bound on the minimum energy gap, such at the final sweeps
     we are highly likely to settle into the current valley.
     """
-    RANDMAX = (1 << 32) - 1  # Need to double check this value; TODO: don't hardcode like this.
-
+    # Get nonzero, absolute biases
     abs_h = [abs(hh) for hh in h.values() if hh != 0]
     abs_J = [abs(jj) for jj in J.values() if jj != 0]
     abs_biases = abs_h + abs_J
 
-    # Case where biases are all zero or do not exist
     if not abs_biases:
         return [0.1, 1.0]
 
@@ -336,6 +334,7 @@ def _default_ising_beta_range(h, J):
     # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
     #   energy, chance of flipping is set to 1%
     #   0.01 = RANDMAX * exp(-cold_beta * min_delta_energy)
+    RANDMAX = (1 << 32) - 1  # TODO: Remove RANDMAX hardcode; RANDMAX defined in src/cpu_sa.cpp
     hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
     cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
 
