@@ -141,7 +141,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 * linear
                 * geometric
 
-                seed (int, optional):
+            seed (int, optional):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.

@@ -217,7 +217,7 @@ class TestHeuristicResponse(unittest.TestCase):
         #           'o': [(2,2), (4,1)],
         #           'g': [(1,2)]}
         #
-		#   There are three jobs: 'b', 'o', 'g'
+        #   There are three jobs: 'b', 'o', 'g'
         #   Each tuple represents a task that runs on a particular machine for a given amount of
         #   time. I.e. (machine_id, duration_on_machine)
         #
