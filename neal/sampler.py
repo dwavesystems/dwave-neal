@@ -328,13 +328,12 @@ def _default_ising_beta_range(h, J):
 
     # Selecting betas based on probability of flipping a qubit
     # Hot temp: When we get max change in energy, we want at least 50% of flipping
-    #   0.50 = RANDMAX * exp(-hot_beta * max_delta_energy)
+    #   0.50 = exp(-hot_beta * max_delta_energy)
     #
     # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
     #   energy, chance of flipping is set to 1%
-    #   0.01 = RANDMAX * exp(-cold_beta * min_delta_energy)
-    RANDMAX = (1 << 32) - 1  # TODO: Remove RANDMAX hardcode; RANDMAX defined in src/cpu_sa.cpp
-    hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
-    cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
+    #   0.01 = exp(-cold_beta * min_delta_energy)
+    hot_beta = np.log(2) / max_delta_energy
+    cold_beta = np.log(100) / min_delta_energy
 
     return [hot_beta, cold_beta]
