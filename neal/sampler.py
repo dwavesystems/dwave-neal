@@ -85,7 +85,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
-        ['beta_shedule_options']
+        ['beta_schedule_options']
 
     """
 
@@ -97,7 +97,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         >>> import neal
         >>> sampler = neal.SimulatedAnnealingSampler()
-        >>> sampler.properties['beta_shedule_options']
+        >>> sampler.properties['beta_schedule_options']
         ('linear', 'geometric')
 
     """
@@ -107,11 +107,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         self.parameters = {'beta_range': [],
                            'num_reads': [],
                            'sweeps': [],
-                           'beta_schedule_type': ['beta_shedule_options'],
+                           'beta_schedule_type': ['beta_schedule_options'],
                            'seed': [],
                            'interrupt_function': [],
                            'initial_states': []}
-        self.properties = {'beta_shedule_options': ('linear', 'geometric')
+        self.properties = {'beta_schedule_options': ('linear', 'geometric')
                            }
 
     def sample(self, _bqm, beta_range=None, num_reads=10, sweeps=1000,
@@ -302,30 +302,37 @@ def _default_ising_beta_range(h, J):
 
     Assume each variable in J is also in h.
 
-    We shoot for a final normalized beta of 10. We use the minimum bias to
-    give a lower bound on the minimum energy gap, such at the final sweeps
-    we are highly likely to settle into the current valley.
+    We use the minimum bias to give a lower bound on the minimum energy gap, such at the
+    final sweeps we are highly likely to settle into the current valley.
     """
+    # Get nonzero, absolute biases
+    abs_h = [abs(hh) for hh in h.values() if hh != 0]
+    abs_J = [abs(jj) for jj in J.values() if jj != 0]
+    abs_biases = abs_h + abs_J
 
-    bias_sum = 0.0
-    sigmas = {}
-    min_bias = float("inf")
-    for v, b in iteritems(h):
-        bias_sum += b**2
-        abs_b = abs(b)
-        sigmas[v] = abs_b
-        min_bias = min(abs_b or float("inf"), min_bias)
-    for (u, v), b in iteritems(J):
-        bias_sum += b**2
-        abs_b = abs(b)
-        sigmas[u] += abs_b
-        sigmas[v] += abs_b
-        min_bias = min(abs_b or float("inf"), min_bias)
+    if not abs_biases:
+        return [0.1, 1.0]
 
-    if len(sigmas) > 0:
-        beta_range = [1.0/np.sqrt(bias_sum), 5.0/min_bias]
-    else:
-        # completely empty problem, so beta_range doesn't matter
-        beta_range = [0.1, 1.0]
+    # Rough approximation of min change in energy
+    min_delta_energy = min(abs_biases)
+   
+    # Combine absolute biases by variable
+    abs_bias_dict = {k: abs(v) for k, v in h.items()}
+    for (k1, k2), v in J.items():
+        abs_bias_dict[k1] += abs(v)
+        abs_bias_dict[k2] += abs(v)
 
-    return beta_range
+    # Find max change in energy
+    max_delta_energy = sum(abs_biases) - min(abs_bias_dict.values())
+
+    # Selecting betas based on probability of flipping a qubit
+    # Hot temp: When we get max change in energy, we want at least 50% of flipping
+    #   0.50 = exp(-hot_beta * max_delta_energy)
+    #
+    # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
+    #   energy, chance of flipping is set to 1%
+    #   0.01 = exp(-cold_beta * min_delta_energy)
+    hot_beta = np.log(2) / max_delta_energy
+    cold_beta = np.log(100) / min_delta_energy
+
+    return [hot_beta, cold_beta]
