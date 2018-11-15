@@ -306,26 +306,24 @@ def _default_ising_beta_range(h, J):
     give a lower bound on the minimum energy gap, such at the final sweeps
     we are highly likely to settle into the current valley.
     """
+    RANDMAX = 4294967295  # Need to double check this value; also, don't hardcode like this.
+    if not h and not J:
+    	return [0.1, 1.0]
+    
+    abs_h = [abs(hh) for hh in h.values() if hh != 0]
+    abs_J = [abs(jj) for jj in J.values() if jj != 0]
 
-    bias_sum = 0.0
-    sigmas = {}
-    min_bias = float("inf")
-    for v, b in iteritems(h):
-        bias_sum += b**2
-        abs_b = abs(b)
-        sigmas[v] = abs_b
-        min_bias = min(abs_b or float("inf"), min_bias)
-    for (u, v), b in iteritems(J):
-        bias_sum += b**2
-        abs_b = abs(b)
-        sigmas[u] += abs_b
-        sigmas[v] += abs_b
-        min_bias = min(abs_b or float("inf"), min_bias)
+    max_delta_energy = sum([sum(abs_h), sum(abs_J)])
+    
+    min_delta_energy = min(min(abs_h), min(abs_J))
+    
+    hot_beta = (np.log(2) + np.log(RANDMAX)) / max_delta_energy
+    cold_beta = (np.log(100) + np.log(RANDMAX)) / min_delta_energy
+    
+    return [hot_beta, cold_beta]
 
-    if len(sigmas) > 0:
-        beta_range = [1.0/np.sqrt(bias_sum), 5.0/min_bias]
-    else:
-        # completely empty problem, so beta_range doesn't matter
-        beta_range = [0.1, 1.0]
-
-    return beta_range
+if __name__ == "__main__":
+    bqm = dimod.BinaryQuadraticModel({'longJob_2,2': -1.5, 'longJob_0,1': -2.0, 'small1_0,0': -1.96875, 'small2_0,2': 0.0, 'longJob_2,1': 0.125, 'longJob_0,3': -2.0, 'small2_0,1': -1.5, 'longJob_1,1': -2.0, 'longJob_1,2': -2.0, 'small2_0,0': -1.875, 'longJob_0,0': -2.0, 'small1_0,3': 0.0, 'small1_0,2': -1.5, 'longJob_2,0': 0.03125, 'small1_0,1': -1.875, 'longJob_2,3': 0.0, 'longJob_1,3': -2.0, 'longJob_0,2': -2.0}, {('small1_0,2', 'small1_0,1'): 4.0, ('small1_0,3', 'small1_0,0'): 4.0, ('small2_0,1', 'small2_0,0'): 4.0, ('longJob_0,1', 'longJob_0,0'): 4.0, ('longJob_1,2', 'longJob_0,2'): 2, ('longJob_0,2', 'longJob_1,1'): 2, ('longJob_2,3', 'longJob_1,3'): 2, ('small2_0,2', 'small2_0,0'): 4.0, ('small2_0,1', 'longJob_2,2'): 2, ('longJob_0,3', 'longJob_1,2'): 2, ('longJob_2,3', 'longJob_2,2'): 4.0, ('small1_0,3', 'longJob_1,3'): 4, ('small1_0,1', 'small1_0,0'): 4.0, ('longJob_0,2', 'longJob_0,1'): 4.0, ('longJob_0,3', 'longJob_0,2'): 4.0, ('longJob_1,1', 'small1_0,1'): 4, ('longJob_1,3', 'longJob_1,2'): 4.0, ('longJob_2,3', 'small2_0,2'): 2, ('small2_0,2', 'small2_0,1'): 4.0, ('longJob_0,3', 'longJob_0,1'): 4.0, ('small1_0,3', 'small1_0,1'): 4.0, ('longJob_0,3', 'longJob_1,1'): 2, ('small1_0,2', 'small1_0,0'): 4.0, ('longJob_1,2', 'longJob_1,1'): 4.0, ('longJob_2,2', 'small2_0,2'): 4, ('longJob_0,3', 'longJob_1,3'): 2, ('longJob_1,2', 'longJob_2,2'): 2, ('longJob_0,1', 'longJob_1,1'): 2, ('longJob_1,2', 'small1_0,2'): 4, ('longJob_1,3', 'longJob_2,2'): 2, ('longJob_0,2', 'longJob_0,0'): 4.0, ('longJob_0,3', 'longJob_0,0'): 4.0, ('longJob_1,3', 'longJob_1,1'): 4.0, ('small1_0,3', 'small1_0,2'): 4.0}, 9.0, dimod.BINARY)
+    sampler = SimulatedAnnealingSampler()
+    response = sampler.sample(bqm)
+    print(next(response.data()))
