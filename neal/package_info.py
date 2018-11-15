@@ -14,7 +14,7 @@
 #
 # ================================================================================================
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 __author__ = 'D-Wave Systems Inc.'
 __authoremail__ = 'wbernoudy@dwavesys.com'
 __description__ = 'General Ising graph simulated annealing solver'
