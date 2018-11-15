@@ -302,9 +302,8 @@ def _default_ising_beta_range(h, J):
 
     Assume each variable in J is also in h.
 
-    We shoot for a final normalized beta of 10. We use the minimum bias to
-    give a lower bound on the minimum energy gap, such at the final sweeps
-    we are highly likely to settle into the current valley.
+    We use the minimum bias to give a lower bound on the minimum energy gap, such at the
+    final sweeps we are highly likely to settle into the current valley.
     """
     # Get nonzero, absolute biases
     abs_h = [abs(hh) for hh in h.values() if hh != 0]
