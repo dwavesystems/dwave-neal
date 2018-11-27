@@ -115,15 +115,14 @@ void simulated_annealing_run(char* state, vector<double>& h,
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
             // this threshold will allow us to skip the metropolis update for
-            // variables that have an extremely low chance of getting flipped
-            const double threshold = 23 / beta;
+            // variables that have zero chance of getting flipped.
+            // our RNG generates 64 bit integers, so we have a resolution of
+            // 1 / 2^64. since log(1 / 2^64) = -44.361, if the delta energy is
+            // greater than 44.361, then we can safely skip computing the
+            // probability.
+            const double threshold = -44.36142 / beta;
 
             for (int var = 0; var < num_vars; var++) {
-                // if the delta_energy for the variable is greater than
-                // `threshold`, then we know exp(-delta energy*beta) < 1.1e-10,
-                // (because exp(`threshold` * beta) = exp(-23) = 1.026e-10)
-                // meaning there is less than 1 in 1e9 chance that the spin
-                // will be accepted. in other words, we can safely ignore it.
                 if (delta_energy[var] >= threshold) continue;
 
                 flip_spin = false;
