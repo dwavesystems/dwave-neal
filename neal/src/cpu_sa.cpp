@@ -118,9 +118,9 @@ void simulated_annealing_run(char* state, vector<double>& h,
             // variables that have zero chance of getting flipped.
             // our RNG generates 64 bit integers, so we have a resolution of
             // 1 / 2^64. since log(1 / 2^64) = -44.361, if the delta energy is
-            // greater than 44.361, then we can safely skip computing the
-            // probability.
-            const double threshold = -44.36142 / beta;
+            // greater than 44.361 / beta, then we can safely skip computing
+            // the probability.
+            const double threshold = 44.36142 / beta;
 
             for (int var = 0; var < num_vars; var++) {
                 if (delta_energy[var] >= threshold) continue;
