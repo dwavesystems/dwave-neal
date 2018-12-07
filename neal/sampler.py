@@ -322,15 +322,18 @@ def _default_ising_beta_range(h, J):
         abs_bias_dict[k1] += abs(v)
         abs_bias_dict[k2] += abs(v)
 
-    # Find max change in energy
-    max_delta_energy = sum(abs_biases) - min(abs_bias_dict.values())
+    # Find max change in energy when flipping a single qubit
+    max_delta_energy = max(abs_bias_dict.values())
 
     # Selecting betas based on probability of flipping a qubit
-    # Hot temp: When we get max change in energy, we want at least 50% of flipping
+    # Hot temp: When we get max change in energy (the case that is most difficult to flip a qubit
+    # because we're going from a low energy state to high energy state), we want at least 50%
+    # chance of flipping.
     #   0.50 = exp(-hot_beta * max_delta_energy)
     #
-    # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
-    #   energy, chance of flipping is set to 1%
+    # Cold temp: If there is minimal energy change to the system, we want to minimize the chance of
+    # flipping. Don't want to be stuck between small energy tweaks. Hence, set cold_beta so that
+    # at minimum energy change, the chance of flipping is set to 1%.
     #   0.01 = exp(-cold_beta * min_delta_energy)
     hot_beta = np.log(2) / max_delta_energy
     cold_beta = np.log(100) / min_delta_energy
