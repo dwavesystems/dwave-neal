@@ -30,6 +30,17 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         sampler = Neal()
         dimod.testing.assert_sampler_api(sampler)
 
+    def test_one_node_beta_range(self):
+        h = {'a': -1}
+        bqm = dimod.BinaryQuadraticModel(h, {}, 0, dimod.SPIN)
+        response = Neal().sample(bqm)
+        hot_beta, cold_beta = response.info['beta_range']
+
+        # Recall that beta is proportional to 1/temperature
+        self.assertLess(hot_beta, cold_beta)
+        self.assertNotEqual(hot_beta, float("inf"), "Starting value of 'beta_range' is infinite")
+        self.assertNotEqual(cold_beta, float("inf"), "Final value of 'beta_range' is infinite")
+
     def test_sample_ising(self):
         h = {'a': 0, 'b': -1}
         J = {('a', 'b'): -1}
@@ -49,6 +60,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         self.assertEqual(col, 2)  # should get back two variables
         self.assertIs(resp.vartype, dimod.BINARY)  # should be qubo
+
 
     def test_basic_response(self):
         sampler = Neal()

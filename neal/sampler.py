@@ -313,9 +313,9 @@ def _default_ising_beta_range(h, J):
     if not abs_biases:
         return [0.1, 1.0]
 
-    # Rough approximation of min change in energy
+    # Rough approximation of min change in energy when flipping a qubit
     min_delta_energy = min(abs_biases)
-   
+
     # Combine absolute biases by variable
     abs_bias_dict = {k: abs(v) for k, v in h.items()}
     for (k1, k2), v in J.items():
