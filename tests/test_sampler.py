@@ -36,7 +36,20 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         response = Neal().sample(bqm)
         hot_beta, cold_beta = response.info['beta_range']
 
-        # Recall that beta is proportional to 1/temperature
+        # Check beta values
+        # Note: beta is proportional to 1/temperature, therefore hot_beta < cold_beta
+        self.assertLess(hot_beta, cold_beta)
+        self.assertNotEqual(hot_beta, float("inf"), "Starting value of 'beta_range' is infinite")
+        self.assertNotEqual(cold_beta, float("inf"), "Final value of 'beta_range' is infinite")
+
+    def test_one_edge_beta_range(self):
+        J = {('a', 'b'): 1}
+        bqm = dimod.BinaryQuadraticModel({}, J, 0, dimod.BINARY)
+        response = Neal().sample(bqm)
+        hot_beta, cold_beta = response.info['beta_range']
+
+        # Check beta values
+        # Note: beta is proportional to 1/temperature, therefore hot_beta < cold_beta
         self.assertLess(hot_beta, cold_beta)
         self.assertNotEqual(hot_beta, float("inf"), "Starting value of 'beta_range' is infinite")
         self.assertNotEqual(cold_beta, float("inf"), "Final value of 'beta_range' is infinite")
