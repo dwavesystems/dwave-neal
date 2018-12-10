@@ -74,7 +74,6 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertEqual(col, 2)  # should get back two variables
         self.assertIs(resp.vartype, dimod.BINARY)  # should be qubo
 
-
     def test_basic_response(self):
         sampler = Neal()
         h = {'a': 0, 'b': -1}
