@@ -313,24 +313,28 @@ def _default_ising_beta_range(h, J):
     if not abs_biases:
         return [0.1, 1.0]
 
-    # Rough approximation of min change in energy
+    # Rough approximation of min change in energy when flipping a qubit
     min_delta_energy = min(abs_biases)
-   
+
     # Combine absolute biases by variable
     abs_bias_dict = {k: abs(v) for k, v in h.items()}
     for (k1, k2), v in J.items():
         abs_bias_dict[k1] += abs(v)
         abs_bias_dict[k2] += abs(v)
 
-    # Find max change in energy
-    max_delta_energy = sum(abs_biases) - min(abs_bias_dict.values())
+    # Find max change in energy when flipping a single qubit
+    max_delta_energy = max(abs_bias_dict.values())
 
     # Selecting betas based on probability of flipping a qubit
-    # Hot temp: When we get max change in energy, we want at least 50% of flipping
+    # Hot temp: We want to scale hot_beta so that for the most unlikely qubit flip, we get at least
+    # 50% chance of flipping.(This means all other qubits will have > 50% chance of flipping
+    # initially.) Most unlikely flip is when we go from a very low energy state to a high energy
+    # state, thus we calculate hot_beta based on max_delta_energy.
     #   0.50 = exp(-hot_beta * max_delta_energy)
     #
-    # Cold temp: Want to minimize chances of flipping. Hence, if we get the minimum change in
-    #   energy, chance of flipping is set to 1%
+    # Cold temp: Towards the end of the annealing schedule, we want to minimize the chance of
+    # flipping. Don't want to be stuck between small energy tweaks. Hence, set cold_beta so that
+    # at minimum energy change, the chance of flipping is set to 1%.
     #   0.01 = exp(-cold_beta * min_delta_energy)
     hot_beta = np.log(2) / max_delta_energy
     cold_beta = np.log(100) / min_delta_energy
