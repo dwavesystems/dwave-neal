@@ -60,7 +60,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         resp = Neal().sample_ising(h, J)
 
-        row, col = resp.samples_matrix.shape
+        row, col = resp.record.sample.shape
 
         self.assertEqual(col, 2)  # should get back two variables
         self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
@@ -69,7 +69,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         Q = {(0, 1): 1}
         resp = Neal().sample_qubo(Q)
 
-        row, col = resp.samples_matrix.shape
+        row, col = resp.record.sample.shape
 
         self.assertEqual(col, 2)  # should get back two variables
         self.assertIs(resp.vartype, dimod.BINARY)  # should be qubo
@@ -80,7 +80,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         J = {('a', 'b'): -1}
         response = sampler.sample_ising(h, J)
 
-        self.assertIsInstance(response, dimod.Response, "Sampler returned an unexpected response type")
+        self.assertIsInstance(response, dimod.SampleSet, "Sampler returned an unexpected response type")
 
     def test_num_reads(self):
         sampler = Neal()
@@ -90,7 +90,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         for num_reads in (1, 10, 100, 3223, 10352):
             response = sampler.sample_ising(h, J, num_reads=num_reads)
-            row, col = response.samples_matrix.shape
+            row, col = response.record.sample.shape
 
             self.assertEqual(row, num_reads)
             self.assertEqual(col, 4)
@@ -139,8 +139,8 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
             response0 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
             response1 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
 
-            samples0 = response0.samples_matrix
-            samples1 = response1.samples_matrix
+            samples0 = response0.record.sample
+            samples1 = response1.record.sample
 
             self.assertTrue(np.array_equal(samples0, samples1), "Same seed returned different results")
 
@@ -166,7 +166,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         resp = sampler.sample_ising(h, J, sweeps=1000, num_reads=100)
 
-        row, col = resp.samples_matrix.shape
+        row, col = resp.record.sample.shape
 
         self.assertEqual(row, 100)
         self.assertEqual(col, 6)  # should get back two variables
@@ -181,7 +181,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='geometric')
 
-        row, col = resp.samples_matrix.shape
+        row, col = resp.record.sample.shape
 
         self.assertEqual(row, num_reads)
         self.assertEqual(col, num_vars)  # should get back two variables
@@ -221,7 +221,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                                     initial_states=(initial_state_array, init_labels))
 
         for v in var_labels:
-            self.assertTrue(np.array_equal(resp.record.sample[:, resp.label_to_idx[v]], 
+            self.assertTrue(np.array_equal(resp.record.sample[:, resp.variables.index(v)], 
                                            initial_state_array[:, init_labels[v]]),
                             "Samples were not the same as initial states with "
                             "no sweeps")
