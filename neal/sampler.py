@@ -275,17 +275,17 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             "beta_range": beta_range,
             "beta_schedule_type": beta_schedule_type
         }
-        response = dimod.Response.from_samples(
+        response = dimod.SampleSet.from_samples(
             samples,
-            {'energy': energies+off},
+            energy=energies+off,
             info=info,
             vartype=dimod.SPIN
         )
-        
+
         response.change_vartype(bqm.vartype, inplace=True)
         if use_label_map:
             response.relabel_variables(inverse_mapping, inplace=True)
-        
+
         return response
 
 
