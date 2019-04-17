@@ -161,7 +161,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         Examples:
             This example runs simulated annealing on a binary quadratic model with some
-            different input paramters.
+            different input parameters.
 
             >>> import dimod
             >>> import neal
