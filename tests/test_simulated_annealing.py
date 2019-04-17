@@ -14,10 +14,60 @@
 #
 # ================================================================================================
 
+import time
 import unittest
+import contextlib
+
 import numpy as np
 
 from neal.simulated_annealing import simulated_annealing
+
+
+try:
+    perf_counter = time.perf_counter
+except AttributeError:  # pragma: no cover
+    # python 2
+    perf_counter = time.time
+
+
+@contextlib.contextmanager
+def tictoc(*args, **kwargs):
+    """Code block execution timer.
+
+    Example:
+
+        with tictoc() as timer:
+            # some code
+            print("partial duration", timer.duration)
+            # more code
+
+        print("total duration", timer.duration)
+
+    """
+
+    class Timer(object):
+        _start = _end = None
+
+        def start(self):
+            self._start = perf_counter()
+
+        def stop(self):
+            self._end = perf_counter()
+
+        @property
+        def duration(self):
+            if self._start is None:
+                return None
+            if self._end is not None:
+                return self._end - self._start
+            return perf_counter() - self._start
+
+    timer = Timer()
+    timer.start()
+    try:
+        yield timer
+    finally:
+        timer.stop()
 
 
 class TestSA(unittest.TestCase):
