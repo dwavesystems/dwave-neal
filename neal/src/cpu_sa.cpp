@@ -299,7 +299,7 @@ int general_simulated_annealing(char* states,
 
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
-                                         coupler_ends, coupler_weights);
+                                            coupler_ends, coupler_weights);
 
         sample++;
 

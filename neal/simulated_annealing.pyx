@@ -1,4 +1,4 @@
-# distutils: language = c++
+# distutils: language=c++
 # Copyright 2018 D-Wave Systems Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-# ================================================================================================
+# =============================================================================
+
 from libcpp cimport bool
 from libcpp.vector cimport vector
 
@@ -29,16 +30,14 @@ cdef extern from "cpu_sa.h":
             double* energies,
             const int num_samples,
             vector[double] & h,
-            vector[int] & coupler_states,
+            vector[int] & coupler_starts,
             vector[int] & coupler_ends,
-            vector[double] & coupler_weightes,
+            vector[double] & coupler_weights,
             int sweeps_per_beta,
             vector[double] & beta_schedule,
             unsigned long long seed,
             callback interrupt_callback,
-            void *interrupt_function)
-
-
+            void *interrupt_function) nogil
 
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
@@ -115,29 +114,40 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
-    cdef char* states = &states_numpy[0, 0]
-
+    # allocate ndarray for energies
     cdef np.ndarray[double, ndim=1, mode="c"] energies = np.empty(num_samples, dtype=np.float64)
-    cdef double* energies_pointer = &energies[0]
 
-    num = general_simulated_annealing(states,
-                                      energies_pointer,
-                                      num_samples,
-                                      h,
-                                      coupler_starts,
-                                      coupler_ends,
-                                      coupler_weights,
-                                      sweeps_per_beta,
-                                      beta_schedule,
-                                      seed,
-                                      interrupt_callback,
-                                      <void*>interrupt_function)
+    # explicitly convert all Python types to C while we have the GIL
+    cdef char* _states = &states_numpy[0, 0]
+    cdef double* _energies = &energies[0]
+    cdef int _num_samples = num_samples
+    cdef vector[double] _h = h
+    cdef vector[int] _coupler_starts = coupler_starts
+    cdef vector[int] _coupler_ends = coupler_ends
+    cdef vector[double] _coupler_weights = coupler_weights
+    cdef int _sweeps_per_beta = sweeps_per_beta
+    cdef vector[double] _beta_schedule = beta_schedule
+    cdef unsigned long long _seed = seed
+
+    with nogil:
+        num = general_simulated_annealing(_states,
+                                          _energies,
+                                          _num_samples,
+                                          _h,
+                                          _coupler_starts,
+                                          _coupler_ends,
+                                          _coupler_weights,
+                                          _sweeps_per_beta,
+                                          _beta_schedule,
+                                          _seed,
+                                          interrupt_callback,
+                                          <void*>interrupt_function)
 
     # discard the noise if we were interrupted
     return states_numpy[:num], energies[:num]
 
 
-cdef bool interrupt_callback(void *interrupt_function):
+cdef bool interrupt_callback(void *interrupt_function) with gil:
     try:
         return (<object>interrupt_function)()
     except Exception:
