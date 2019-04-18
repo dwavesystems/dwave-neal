@@ -14,12 +14,8 @@
 //
 // ===========================================================================
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include <ctime>
 #include <vector>
-#include <iostream>
 #include <stdexcept>
 #include "cpu_sa.h"
 
