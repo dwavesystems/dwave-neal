@@ -29,13 +29,13 @@ cdef extern from "cpu_sa.h":
             char* samples,
             double* energies,
             const int num_samples,
-            vector[double] & h,
-            vector[int] & coupler_starts,
-            vector[int] & coupler_ends,
-            vector[double] & coupler_weights,
-            int sweeps_per_beta,
-            vector[double] & beta_schedule,
-            unsigned long long seed,
+            const vector[double] & h,
+            const vector[int] & coupler_starts,
+            const vector[int] & coupler_ends,
+            const vector[double] & coupler_weights,
+            const int sweeps_per_beta,
+            const vector[double] & beta_schedule,
+            const unsigned long long seed,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -141,13 +141,13 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _beta_schedule,
                                           _seed,
                                           interrupt_callback,
-                                          <void*>interrupt_function)
+                                          <void * const>interrupt_function)
 
     # discard the noise if we were interrupted
     return states_numpy[:num], energies[:num]
 
 
-cdef bool interrupt_callback(void *interrupt_function) with gil:
+cdef bool interrupt_callback(void * const interrupt_function) with gil:
     try:
         return (<object>interrupt_function)()
     except Exception:
