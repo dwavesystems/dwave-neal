@@ -18,6 +18,7 @@ import time
 import unittest
 import contextlib
 from concurrent.futures import ThreadPoolExecutor, wait
+from copy import deepcopy
 
 import numpy as np
 
@@ -224,7 +225,7 @@ class TestSA(unittest.TestCase):
                         "Initial states do not match samples with 0 sweeps")
 
     def test_concurrency(self):
-        problem = self._sample_fm_problem(num_variables=100, num_samples=100, num_sweeps=1000)
+        problem = self._sample_fm_problem(num_variables=100, num_samples=100, num_sweeps=100000)
 
         num_threads = 3
 
@@ -232,10 +233,10 @@ class TestSA(unittest.TestCase):
 
             with tictoc() as sequential:
                 for _ in range(num_threads):
-                    wait([executor.submit(simulated_annealing, *problem)])
+                    wait([executor.submit(simulated_annealing, *deepcopy(problem))])
 
             with tictoc() as parallel:
-                wait([executor.submit(simulated_annealing, *problem) for _ in range(num_threads)])
+                wait([executor.submit(simulated_annealing, *deepcopy(problem)) for _ in range(num_threads)])
 
         speedup = sequential.duration / parallel.duration
 
