@@ -115,7 +115,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
     # allocate ndarray for energies
-    cdef double[:] energies = np.empty(num_samples, dtype=np.float64)
+    energies_numpy = np.empty(num_samples, dtype=np.float64)
+    cdef double[:] energies = energies_numpy
 
     # explicitly convert all Python types to C while we have the GIL
     cdef char* _states = &states_numpy[0, 0]
@@ -143,8 +144,9 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           interrupt_callback,
                                           <void * const>interrupt_function)
 
-    # discard the noise if we were interrupted
-    return states_numpy[:num], energies[:num]
+    # coerce the memoryview to numpy.ndarray (without copying the data)
+    # and discard the noise if we were interrupted
+    return np.asarray(states_numpy[:num,:]), energies_numpy[:num]
 
 
 cdef bool interrupt_callback(void * const interrupt_function) with gil:
