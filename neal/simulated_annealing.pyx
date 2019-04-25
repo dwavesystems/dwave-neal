@@ -42,7 +42,7 @@ cdef extern from "cpu_sa.h":
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
-                        char[:,::1] states_numpy,
+                        np.ndarray[char, ndim=2, mode="c"] states_numpy,
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -84,7 +84,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         parameters are the same, the returned samples will be
         identical.
 
-    states_numpy : char[:,::1], values in (-1, 1)
+    states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the simulated annealing runs. Should be of
         a contiguous numpy.ndarray of shape (num_samples, num_variables).
 
@@ -144,9 +144,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           interrupt_callback,
                                           <void * const>interrupt_function)
 
-    # coerce the memoryview to numpy.ndarray (without copying the data)
-    # and discard the noise if we were interrupted
-    return np.asarray(states_numpy[:num,:]), energies_numpy[:num]
+    # discard the noise if we were interrupted
+    return states_numpy[:num], energies_numpy[:num]
 
 
 cdef bool interrupt_callback(void * const interrupt_function) with gil:
