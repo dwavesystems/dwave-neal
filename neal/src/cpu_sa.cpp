@@ -33,7 +33,8 @@
 
 using namespace std;
 
-uint64_t rng_state[2]; // this holds the state of the rng
+// this holds the state of our thread-safe/local RNG
+thread_local uint64_t rng_state[2];
 
 // Returns the energy delta from flipping variable at index `var`
 // @param var the index of the variable to flip

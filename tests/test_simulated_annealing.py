@@ -227,7 +227,7 @@ class TestSA(unittest.TestCase):
     def test_concurrency(self):
         problem = self._sample_fm_problem(num_variables=100, num_samples=100, num_sweeps=100000)
 
-        num_threads = 3
+        num_threads = 2
 
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
 
