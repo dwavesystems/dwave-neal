@@ -72,6 +72,24 @@ def tictoc(*args, **kwargs):
         timer.stop()
 
 
+def cpu_count():
+    try:
+        import os
+        # doesn't exist in python2, and can return None
+        return os.cpu_count() or 1
+    except AttributeError:
+        pass
+
+    try:
+        import multiprocessing
+        # doesn't have to be implemented
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        pass
+
+    return 1
+
+
 class TestSA(unittest.TestCase):
     def _sample_fm_problem(self, num_variables=10, num_samples=100, num_sweeps=1000):
         h = [-1]*num_variables
@@ -224,6 +242,7 @@ class TestSA(unittest.TestCase):
         self.assertTrue(np.array_equal(initial_states, samples),
                         "Initial states do not match samples with 0 sweeps")
 
+    @unittest.skipUnless(cpu_count() >= 2, "at least two threads required")
     def test_concurrency(self):
         problem = self._sample_fm_problem(num_variables=100, num_samples=100, num_sweeps=100000)
 
@@ -241,7 +260,7 @@ class TestSA(unittest.TestCase):
         speedup = sequential.duration / parallel.duration
 
         # speed-up should be around num_threads, but account for varying overhead
-        self.assertLess(0.8*num_threads, speedup)
+        self.assertGreater(speedup, 0.8*num_threads)
         self.assertLess(speedup, 1.2*num_threads)
 
 
