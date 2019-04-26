@@ -260,8 +260,8 @@ class TestSA(unittest.TestCase):
         speedup = sequential.duration / parallel.duration
 
         # speed-up should be around num_threads, but account for varying overhead
-        self.assertGreater(speedup, 0.8*num_threads)
-        self.assertLess(speedup, 1.2*num_threads)
+        self.assertGreater(speedup, 0.75*num_threads)
+        self.assertLess(speedup, 1.25*num_threads)
 
 
 if __name__ == "__main__":
