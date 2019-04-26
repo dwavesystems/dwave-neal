@@ -102,10 +102,6 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         The energies.
 
     """
-    if interrupt_function is None:
-        def interrupt_function():
-            return False
-
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,
@@ -130,6 +126,12 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
 
+    cdef void* _interrupt_function
+    if interrupt_function is None:
+        _interrupt_function = NULL
+    else:
+        _interrupt_function = <void *>interrupt_function
+
     with nogil:
         num = general_simulated_annealing(_states,
                                           _energies,
@@ -142,7 +144,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _beta_schedule,
                                           _seed,
                                           interrupt_callback,
-                                          <void * const>interrupt_function)
+                                          _interrupt_function)
 
     # discard the noise if we were interrupted
     return states_numpy[:num], energies_numpy[:num]

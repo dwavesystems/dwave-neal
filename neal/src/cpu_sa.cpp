@@ -313,8 +313,8 @@ int general_simulated_annealing(
 
         sample++;
 
-        // if interrupt_function returns True, stop sampling
-        if (interrupt_callback(interrupt_function)) break;
+        // if interrupt_function returns true, stop sampling
+        if (interrupt_function && interrupt_callback(interrupt_function)) break;
     }
 
     // return the number of samples we actually took
