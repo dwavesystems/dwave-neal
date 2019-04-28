@@ -14,12 +14,8 @@
 //
 // ===========================================================================
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include <ctime>
 #include <vector>
-#include <iostream>
 #include <stdexcept>
 #include "cpu_sa.h"
 
@@ -37,7 +33,8 @@
 
 using namespace std;
 
-uint64_t rng_state[2]; // this holds the state of the rng
+// this holds the state of our thread-safe/local RNG
+thread_local uint64_t rng_state[2];
 
 // Returns the energy delta from flipping variable at index `var`
 // @param var the index of the variable to flip
@@ -50,10 +47,14 @@ uint64_t rng_state[2]; // this holds the state of the rng
 //     neighbour_couplings[i][j] is the J value or weight on the coupling
 //     between variables i and neighbors[i][j]. 
 // @return delta energy
-double get_flip_energy(int var, char *state, vector<double> & h, 
-                      vector<int> & degrees, 
-                      vector<vector<int>> & neighbors, 
-                      vector<vector<double>> & neighbour_couplings) {
+double get_flip_energy(
+    int var,
+    char *state,
+    const vector<double>& h,
+    const vector<int>& degrees,
+    const vector<vector<int>>& neighbors,
+    const vector<vector<double>>& neighbour_couplings
+) {
     double energy = h[var];
     // iterate over the neighbors of variable `var`
     for (int n_i = 0; n_i < degrees[var]; n_i++) {
@@ -86,12 +87,15 @@ double get_flip_energy(int var, char *state, vector<double> & h,
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
-void simulated_annealing_run(char* state, vector<double>& h, 
-                               vector<int>& degrees, 
-                               vector<vector<int>>& neighbors, 
-                               vector<vector<double>>& neighbour_couplings,
-                               int sweeps_per_beta,
-                               vector<double> beta_schedule) {
+void simulated_annealing_run(
+    char* state,
+    const vector<double>& h,
+    const vector<int>& degrees,
+    const vector<vector<int>>& neighbors,
+    const vector<vector<double>>& neighbour_couplings,
+    const int sweeps_per_beta,
+    const vector<double>& beta_schedule
+) {
     const int num_vars = h.size();
 
     // this double array will hold the delta energy for every variable
@@ -103,8 +107,8 @@ void simulated_annealing_run(char* state, vector<double>& h,
     // build the delta_energy array by getting the delta energy for each
     // variable
     for (int var = 0; var < num_vars; var++) {
-        delta_energy[var] = get_flip_energy(var, state, h, degrees, 
-                                             neighbors, neighbour_couplings);
+        delta_energy[var] = get_flip_energy(var, state, h, degrees,
+                                            neighbors, neighbour_couplings);
     }
 
     bool flip_spin;
@@ -183,9 +187,13 @@ void simulated_annealing_run(char* state, vector<double>& h,
 //        couplers in the same order as coupler_starts and coupler_ends
 // @return A double corresponding to the energy for `state` on the problem
 //        defined by h and the couplers passed in
-double get_state_energy(char* state, vector<double> h, 
-                        vector<int> coupler_starts, vector<int> coupler_ends, 
-                        vector<double> coupler_weights) {
+double get_state_energy(
+    char* state,
+    const vector<double>& h,
+    const vector<int>& coupler_starts,
+    const vector<int>& coupler_ends,
+    const vector<double>& coupler_weights
+) {
     double energy = 0.0;
     // sum the energy due to local fields on variables
     for (unsigned int var = 0; var < h.size(); var++) {
@@ -193,8 +201,7 @@ double get_state_energy(char* state, vector<double> h,
     }
     // sum the energy due to coupling weights
     for (unsigned int c = 0; c < coupler_starts.size(); c++) {
-        energy += state[coupler_starts[c]] * coupler_weights[c] * 
-                                                        state[coupler_ends[c]];
+        energy += state[coupler_starts[c]] * coupler_weights[c] * state[coupler_ends[c]];
     }
     return energy;
 }
@@ -223,20 +230,20 @@ double get_state_energy(char* state, vector<double> h,
 //        if the function returns True then it will stop running.
 // @param interrupt_function A pointer to contents that are passed to interrupt_callback.
 // @return the number of samples taken. If no interrupt occured, will equal num_samples.
-int general_simulated_annealing(char* states,
-                                double* energies,
-                                const int num_samples,
-                                vector<double> h, 
-                                vector<int> coupler_starts, 
-                                vector<int> coupler_ends, 
-                                vector<double> coupler_weights,
-                                int sweeps_per_beta,
-                                vector<double> beta_schedule,
-                                uint64_t seed,
-                                callback interrupt_callback,
-                                void *interrupt_function)
-{
-
+int general_simulated_annealing(
+    char* states,
+    double* energies,
+    const int num_samples,
+    const vector<double> h,
+    const vector<int> coupler_starts,
+    const vector<int> coupler_ends,
+    const vector<double> coupler_weights,
+    const int sweeps_per_beta,
+    const vector<double> beta_schedule,
+    const uint64_t seed,
+    callback interrupt_callback,
+    void * const interrupt_function
+) {
     // TODO 
     // assert len(states) == num_samples*num_vars*sizeof(char)
     // assert len(coupler_starts) == len(coupler_ends) == len(coupler_weights)
@@ -251,8 +258,7 @@ int general_simulated_annealing(char* states,
     
     // set the seed of the RNG
     // note that xorshift+ requires a non-zero seed
-    if (seed == 0) seed = RANDMAX;
-    rng_state[0] = seed;
+    rng_state[0] = seed ? seed : RANDMAX;
     rng_state[1] = 0;
 
     // degrees will be a vector of the degrees of each variable
@@ -303,12 +309,12 @@ int general_simulated_annealing(char* states,
 
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
-                                         coupler_ends, coupler_weights);
+                                            coupler_ends, coupler_weights);
 
         sample++;
 
-        // if interrupt_function returns True, stop sampling
-        if (interrupt_callback(interrupt_function)) break;
+        // if interrupt_function returns true, stop sampling
+        if (interrupt_function && interrupt_callback(interrupt_function)) break;
     }
 
     // return the number of samples we actually took

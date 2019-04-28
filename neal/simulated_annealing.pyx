@@ -1,4 +1,4 @@
-# distutils: language = c++
+# distutils: language=c++
 # Copyright 2018 D-Wave Systems Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-# ================================================================================================
+# =============================================================================
+
 from libcpp cimport bool
 from libcpp.vector cimport vector
 
@@ -28,17 +29,15 @@ cdef extern from "cpu_sa.h":
             char* samples,
             double* energies,
             const int num_samples,
-            vector[double] & h,
-            vector[int] & coupler_states,
-            vector[int] & coupler_ends,
-            vector[double] & coupler_weightes,
-            int sweeps_per_beta,
-            vector[double] & beta_schedule,
-            unsigned long long seed,
+            const vector[double] & h,
+            const vector[int] & coupler_starts,
+            const vector[int] & coupler_ends,
+            const vector[double] & coupler_weights,
+            const int sweeps_per_beta,
+            const vector[double] & beta_schedule,
+            const unsigned long long seed,
             callback interrupt_callback,
-            void *interrupt_function)
-
-
+            void *interrupt_function) nogil
 
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
@@ -87,7 +86,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the simulated annealing runs. Should be of
-        shape (num_samples, num_variables).
+        a contiguous numpy.ndarray of shape (num_samples, num_variables).
 
     interrupt_function: function
         Should accept no arguments and return a bool. The function is
@@ -103,10 +102,6 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         The energies.
 
     """
-    if interrupt_function is None:
-        def interrupt_function():
-            return False
-
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,
@@ -115,29 +110,47 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
         return annealed_states, np.zeros(num_samples, dtype=np.double)
 
-    cdef char* states = &states_numpy[0, 0]
+    # allocate ndarray for energies
+    energies_numpy = np.empty(num_samples, dtype=np.float64)
+    cdef double[:] energies = energies_numpy
 
-    cdef np.ndarray[double, ndim=1, mode="c"] energies = np.empty(num_samples, dtype=np.float64)
-    cdef double* energies_pointer = &energies[0]
+    # explicitly convert all Python types to C while we have the GIL
+    cdef char* _states = &states_numpy[0, 0]
+    cdef double* _energies = &energies[0]
+    cdef int _num_samples = num_samples
+    cdef vector[double] _h = h
+    cdef vector[int] _coupler_starts = coupler_starts
+    cdef vector[int] _coupler_ends = coupler_ends
+    cdef vector[double] _coupler_weights = coupler_weights
+    cdef int _sweeps_per_beta = sweeps_per_beta
+    cdef vector[double] _beta_schedule = beta_schedule
+    cdef unsigned long long _seed = seed
 
-    num = general_simulated_annealing(states,
-                                      energies_pointer,
-                                      num_samples,
-                                      h,
-                                      coupler_starts,
-                                      coupler_ends,
-                                      coupler_weights,
-                                      sweeps_per_beta,
-                                      beta_schedule,
-                                      seed,
-                                      interrupt_callback,
-                                      <void*>interrupt_function)
+    cdef void* _interrupt_function
+    if interrupt_function is None:
+        _interrupt_function = NULL
+    else:
+        _interrupt_function = <void *>interrupt_function
+
+    with nogil:
+        num = general_simulated_annealing(_states,
+                                          _energies,
+                                          _num_samples,
+                                          _h,
+                                          _coupler_starts,
+                                          _coupler_ends,
+                                          _coupler_weights,
+                                          _sweeps_per_beta,
+                                          _beta_schedule,
+                                          _seed,
+                                          interrupt_callback,
+                                          _interrupt_function)
 
     # discard the noise if we were interrupted
-    return states_numpy[:num], energies[:num]
+    return states_numpy[:num], energies_numpy[:num]
 
 
-cdef bool interrupt_callback(void *interrupt_function):
+cdef bool interrupt_callback(void * const interrupt_function) with gil:
     try:
         return (<object>interrupt_function)()
     except Exception:

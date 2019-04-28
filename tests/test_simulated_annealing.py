@@ -14,10 +14,80 @@
 #
 # ================================================================================================
 
+import time
 import unittest
+import contextlib
+from concurrent.futures import ThreadPoolExecutor, wait
+from copy import deepcopy
+
 import numpy as np
 
 from neal.simulated_annealing import simulated_annealing
+
+
+try:
+    perf_counter = time.perf_counter
+except AttributeError:  # pragma: no cover
+    # python 2
+    perf_counter = time.time
+
+
+@contextlib.contextmanager
+def tictoc(*args, **kwargs):
+    """Code block execution timer.
+
+    Example:
+
+        with tictoc() as timer:
+            # some code
+            print("partial duration", timer.duration)
+            # more code
+
+        print("total duration", timer.duration)
+
+    """
+
+    class Timer(object):
+        _start = _end = None
+
+        def start(self):
+            self._start = perf_counter()
+
+        def stop(self):
+            self._end = perf_counter()
+
+        @property
+        def duration(self):
+            if self._start is None:
+                return None
+            if self._end is not None:
+                return self._end - self._start
+            return perf_counter() - self._start
+
+    timer = Timer()
+    timer.start()
+    try:
+        yield timer
+    finally:
+        timer.stop()
+
+
+def cpu_count():
+    try:
+        import os
+        # doesn't exist in python2, and can return None
+        return os.cpu_count() or 1
+    except AttributeError:
+        pass
+
+    try:
+        import multiprocessing
+        # doesn't have to be implemented
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        pass
+
+    return 1
 
 
 class TestSA(unittest.TestCase):
@@ -171,6 +241,35 @@ class TestSA(unittest.TestCase):
 
         self.assertTrue(np.array_equal(initial_states, samples),
                         "Initial states do not match samples with 0 sweeps")
+
+    @unittest.skipUnless(cpu_count() >= 2, "at least two threads required")
+    def test_concurrency(self):
+        """Multiple SA run in parallel threads, not blocking each other due to GIL."""
+
+        problem = self._sample_fm_problem(
+            num_variables=100, num_samples=100, num_sweeps=10000)
+
+        num_threads = 2
+
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+
+            with tictoc() as sequential:
+                for _ in range(num_threads):
+                    wait([executor.submit(simulated_annealing, *deepcopy(problem))])
+
+            with tictoc() as parallel:
+                wait([executor.submit(simulated_annealing, *deepcopy(problem))
+                    for _ in range(num_threads)])
+
+        speedup = sequential.duration / parallel.duration
+
+        # NOTE: we would like to assert stricter bounds on the speedup, e.g.:
+        #   self.assertGreater(speedup, 0.75*num_threads)
+        #   self.assertLess(speedup, 1.25*num_threads)
+        # but due to unreliable/inconsistent performance on CI VMs, we have
+        # to settle with a very basic constraint of 20% speedup, which
+        # indicates, at least, some minimal level of parallelism
+        self.assertGreater(speedup, 1.2)
 
 
 if __name__ == "__main__":

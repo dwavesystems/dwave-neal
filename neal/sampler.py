@@ -114,7 +114,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         self.properties = {'beta_schedule_options': ('linear', 'geometric')
                            }
 
-    def sample(self, _bqm, beta_range=None, num_reads=10, sweeps=1000,
+    def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
                beta_schedule_type="geometric", seed=None,
                interrupt_function=None, initial_states=None):
         """Sample from a binary quadratic model using an implemented sample method.
@@ -161,7 +161,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         Examples:
             This example runs simulated annealing on a binary quadratic model with some
-            different input paramters.
+            different input parameters.
 
             >>> import dimod
             >>> import neal
@@ -183,18 +183,18 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         """
 
         # if already index-labelled, just continue
-        if all(v in _bqm.linear for v in range(len(_bqm))):
-            bqm = _bqm
+        if all(v in bqm.linear for v in range(len(bqm))):
+            _bqm = bqm
             use_label_map = False
         else:
             try:
-                inverse_mapping = dict(enumerate(sorted(_bqm.linear)))
+                inverse_mapping = dict(enumerate(sorted(bqm.linear)))
             except TypeError:
                 # in python3 unlike types cannot be sorted
-                inverse_mapping = dict(enumerate(_bqm.linear))
+                inverse_mapping = dict(enumerate(bqm.linear))
             mapping = {v: i for i, v in iteritems(inverse_mapping)}
 
-            bqm = _bqm.relabel_variables(mapping, inplace=False)
+            _bqm = bqm.relabel_variables(mapping, inplace=False)
             use_label_map = True
 
         # beta_range, sweeps are handled by simulated_annealing
@@ -214,13 +214,13 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             def interrupt_function():
                 return False
 
-        num_variables = len(bqm)
+        num_variables = len(_bqm)
 
         # get the Ising linear biases
-        linear = bqm.spin.linear
+        linear = _bqm.spin.linear
         h = [linear[v] for v in range(num_variables)]
 
-        quadratic = bqm.spin.quadratic
+        quadratic = _bqm.spin.quadratic
         if len(quadratic) > 0:
             couplers, coupler_weights = zip(*iteritems(quadratic))
             couplers = map(lambda c: (c[0], c[1]), couplers)
@@ -270,7 +270,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                                                    seed,
                                                    numpy_initial_states,
                                                    interrupt_function)
-        off = bqm.spin.offset
+        off = _bqm.spin.offset
         info = {
             "beta_range": beta_range,
             "beta_schedule_type": beta_schedule_type
@@ -282,7 +282,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             vartype=dimod.SPIN
         )
 
-        response.change_vartype(bqm.vartype, inplace=True)
+        response.change_vartype(_bqm.vartype, inplace=True)
         if use_label_map:
             response.relabel_variables(inverse_mapping, inplace=True)
 
