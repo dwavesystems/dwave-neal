@@ -204,7 +204,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         self.assertEqual(len(resp), 1)
 
-    def test_initial_states(self):
+    def test_ising_initial_states(self):
         sampler = Neal()
         var_labels = ["a", "b", "c", "d"]
         num_vars = len(var_labels)
@@ -225,6 +225,22 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                                            initial_state_array[:, init_labels[v]]),
                             "Samples were not the same as initial states with "
                             "no sweeps")
+
+    def test_binary_initial_states(self):
+        bqm = dimod.BQM.from_ising({}, {(0,1): 1}).binary
+        num_vars = len(bqm)
+        num_reads = 10
+
+        initial_states_array = np.random.randint(2, size=(num_reads, num_vars))
+
+        expected_response = dimod.SampleSet.from_samples_bqm(initial_states_array, bqm)
+
+        response = Neal().sample(bqm, sweeps=0, initial_states=(initial_states_array, None))
+
+        # if initial_states are not properly converted by the sample method
+        # (from binary to ising), energy levels will not match
+        self.assertTrue(np.array_equal(response.record.sample, expected_response.record.sample))
+        self.assertTrue(np.array_equal(response.record.energy, expected_response.record.energy))
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
