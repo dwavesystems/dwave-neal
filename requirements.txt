@@ -1,8 +1,8 @@
 cython==0.28.5
 
-numpy==1.15.0
-dimod==0.8.1
-six==1.11.0
+numpy==1.15.4
+dimod==0.8.11
+six==1.12.0
 
 mock
 
