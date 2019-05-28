@@ -220,9 +220,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             error_msg = "'seed' should be an integer between 0 and 2^64 - 1"
             raise ValueError(error_msg)
 
-        if interrupt_function is None:
-            def interrupt_function():
-                return False
+        if interrupt_function and not callable(interrupt_function):
+            raise TypeError("'interrupt_function' should be callable")
 
         num_variables = len(_bqm)
 
