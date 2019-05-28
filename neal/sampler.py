@@ -154,9 +154,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 * [deprecated] tuple, where the first value is a numpy array of
                   initial states to seed the simulated annealing runs, and the
                   second is a dict defining a linear variable labelling.
-
-                Initial states provided are assumed to use the same vartype the
-                BQM is using.
+                  In tuple format, initial states provided are assumed to use
+                  the same vartype the BQM is using.
 
                 If initial states are not provided (set to ``None``), uniform
                 random samples are use. If they are provided, the number of
