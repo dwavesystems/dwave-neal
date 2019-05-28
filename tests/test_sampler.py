@@ -242,6 +242,15 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertTrue(np.array_equal(response.record.sample, expected_response.record.sample))
         self.assertTrue(np.array_equal(response.record.energy, expected_response.record.energy))
 
+    def test_sampleset_initial_states(self):
+        bqm = dimod.BQM.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
+        initial_states = dimod.SampleSet.from_samples_bqm({'a': 1, 'b': -1, 'c': 1}, bqm)
+
+        response = Neal().sample(bqm, initial_states=initial_states, num_reads=1)
+
+        self.assertEqual(len(response), 1)
+        self.assertEqual(response.first.energy, -1)
+
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
     def test_empty_problem(self):
