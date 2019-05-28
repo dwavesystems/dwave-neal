@@ -120,7 +120,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
-            bqm (:obj:`dimod.BinaryQuadraticModel`):
+            bqm (:class:`dimod.BinaryQuadraticModel`):
                 The binary quadratic model to be sampled.
 
             beta_range (tuple, optional):
@@ -146,11 +146,20 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 set of parameters produces identical results. If not provided, a random seed
                 is chosen.
 
-            initial_states (tuple(numpy.ndarray, dict), optional):
-                A tuple where the first value is a numpy array of initial states to seed the
-                simulated annealing runs, and the second is a dict defining a linear variable
-                labelling. Initial states provided are assumed to use the same vartype the
+            initial_states (:class:`dimod.SampleSet` or tuple(numpy.ndarray, dict), optional):
+                Initial states provided either as:
+
+                * :class:`dimod.SampleSet`, or
+                * tuple, where the first value is a numpy array of
+                  initial states to seed the simulated annealing runs, and the
+                  second is a dict defining a linear variable labelling.
+
+                Initial states provided are assumed to use the same vartype the
                 BQM is using.
+
+                If initial states are not provided (set to ``None``), uniform
+                random samples are use. If they are provided, the number of
+                states *must match* the number of requested reads, `num_reads`.
 
             interrupt_function (function, optional):
                 If provided, interrupt_function is called with no parameters between each sample of
@@ -251,14 +260,27 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         states_shape = (num_reads, num_variables)
 
-        if initial_states is not None:
-            initial_states_array, init_label_map = initial_states
+        if initial_states is None:
+            numpy_initial_states = 2 * np_rand.randint(2, size=states_shape).astype(np.int8) - 1
+
+        else:
+            if isinstance(initial_states, dimod.SampleSet):
+                initial_states_array = initial_states.record.sample
+                variables = initial_states.variables
+                init_label_map = dict(zip(variables, range(len(variables))))
+            else:
+                initial_states_array, init_label_map = initial_states
+
             if not initial_states_array.shape == states_shape:
                 raise ValueError("`initial_states` must have shape "
                                  "{}".format(states_shape))
+
             if init_label_map is not None:
-                get_label = inverse_mapping.get if use_label_map else lambda i: i
-                initial_states_array = initial_states_array[:, [init_label_map[get_label(i)] for i in range(num_variables)]]
+                identity = lambda i: i
+                get_label = inverse_mapping.get if use_label_map else identity
+                ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
+                initial_states_array = initial_states_array[:, ordered_labels]
+
             numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
 
             # convert to ising, if provided in binary
@@ -266,9 +288,6 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 numpy_initial_states = 2 * numpy_initial_states - 1
             elif bqm.vartype != dimod.SPIN:
                 raise TypeError("unsupported vartype")
-
-        else:
-            numpy_initial_states = 2*np_rand.randint(2, size=(num_reads, num_variables)).astype(np.int8) - 1
 
         # run the simulated annealing algorithm
         samples, energies = sa.simulated_annealing(num_reads, h,
