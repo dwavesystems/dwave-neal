@@ -20,6 +20,7 @@ A dimod sampler_ that uses the simulated annealing algorithm.
 from __future__ import division
 
 import math
+import warnings
 
 from numbers import Integral
 from random import randint
@@ -150,7 +151,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 Initial states provided either as:
 
                 * :class:`dimod.SampleSet`, or
-                * tuple, where the first value is a numpy array of
+                * [deprecated] tuple, where the first value is a numpy array of
                   initial states to seed the simulated annealing runs, and the
                   second is a dict defining a linear variable labelling.
 
@@ -269,6 +270,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 variables = initial_states.variables
                 init_label_map = dict(zip(variables, range(len(variables))))
             else:
+                warnings.warn("tuple format for 'initial_states' is deprecated "
+                              "in favor of 'dimod.SampleSet'.", DeprecationWarning)
                 initial_states_array, init_label_map = initial_states
 
             if not initial_states_array.shape == states_shape:
