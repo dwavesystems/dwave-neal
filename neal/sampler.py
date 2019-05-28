@@ -149,7 +149,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             initial_states (tuple(numpy.ndarray, dict), optional):
                 A tuple where the first value is a numpy array of initial states to seed the
                 simulated annealing runs, and the second is a dict defining a linear variable
-                labelling.
+                labelling. Initial states provided are assumed to use the same vartype the
+                BQM is using.
 
             interrupt_function (function, optional):
                 If provided, interrupt_function is called with no parameters between each sample of
@@ -259,6 +260,13 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 get_label = inverse_mapping.get if use_label_map else lambda i: i
                 initial_states_array = initial_states_array[:, [init_label_map[get_label(i)] for i in range(num_variables)]]
             numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
+
+            # convert to ising, if provided in binary
+            if bqm.vartype == dimod.BINARY:
+                numpy_initial_states = 2 * numpy_initial_states - 1
+            elif bqm.vartype != dimod.SPIN:
+                raise TypeError("unsupported vartype")
+
         else:
             numpy_initial_states = 2*np_rand.randint(2, size=(num_reads, num_variables)).astype(np.int8) - 1
 
