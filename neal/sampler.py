@@ -148,23 +148,42 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 is chosen.
 
             initial_states (:class:`dimod.SampleSet` or tuple(numpy.ndarray, dict), optional):
-                Initial states provided either as:
+                One or more samples, each defining an initial state for all the
+                problem variables. Initial states are given one per read, but
+                if fewer than `num_reads` initial states are defined, additional
+                values are generated as specified by `initial_states_generator`.
+
+                Initial states are provided either as:
 
                 * :class:`dimod.SampleSet`, or
+
                 * [deprecated] tuple, where the first value is a numpy array of
                   initial states to seed the simulated annealing runs, and the
                   second is a dict defining a linear variable labelling.
                   In tuple format, initial states provided are assumed to use
                   the same vartype the BQM is using.
 
-                If initial states are not provided (set to ``None``), uniform
-                random samples are use. If they are provided, the number of
-                states *must match* the number of requested reads, `num_reads`.
+            initial_states_generator (str, 'none'/'tile'/'random', optional, default='random'):
+                Defines the expansion of `initial_states` if fewer than
+                `num_reads` are specified:
+
+                * "none":
+                    If the number of initial states specified is smaller than
+                    `num_reads`, raises ValueError.
+
+                * "tile":
+                    Reuses the specified initial states if fewer than `num_reads`
+                    or truncates if greater.
+
+                * "random":
+                    Expands the specified initial states with randomly generated
+                    states if fewer than `num_reads` or truncates if greater.
 
             interrupt_function (function, optional):
-                If provided, interrupt_function is called with no parameters between each sample of
-                simulated annealing. If the function returns True, then simulated annealing will
-                terminate and return with all of the samples and energies found so far.
+                If provided, interrupt_function is called with no parameters
+                between each sample of simulated annealing. If the function
+                returns True, then simulated annealing will terminate and return
+                with all of the samples and energies found so far.
 
         Returns:
             :obj:`dimod.Response`: A `dimod` :obj:`~dimod.Response` object.
@@ -221,7 +240,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             raise ValueError(error_msg)
 
         if interrupt_function and not callable(interrupt_function):
-            raise TypeError("'interrupt_function' should be callable")
+            raise TypeError("'interrupt_function' should be a callable")
 
         num_variables = len(_bqm)
 
