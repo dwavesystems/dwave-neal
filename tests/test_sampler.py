@@ -227,7 +227,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                             "no sweeps")
 
     def test_binary_initial_states(self):
-        bqm = dimod.BQM.from_ising({}, {(0,1): 1}).binary
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {(0,1): 1}).binary
         num_vars = len(bqm)
         num_reads = 10
 
@@ -243,13 +243,64 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertTrue(np.array_equal(response.record.energy, expected_response.record.energy))
 
     def test_sampleset_initial_states(self):
-        bqm = dimod.BQM.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
         initial_states = dimod.SampleSet.from_samples_bqm({'a': 1, 'b': -1, 'c': 1}, bqm)
 
         response = Neal().sample(bqm, initial_states=initial_states, num_reads=1)
 
         self.assertEqual(len(response), 1)
         self.assertEqual(response.first.energy, -1)
+
+    def test_initial_states_generator(self):
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
+                                                 {'a': -1, 'b': -1, 'c': -1}], bqm)
+        sampler = Neal()
+
+        # 2 fixed initial state, 8 random
+        resp = sampler.sample(bqm, initial_states=init, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # 2 fixed initial states, 8 random, explicit
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='random', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # all random
+        resp = sampler.sample(bqm, initial_states_generator='random', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # all random
+        resp = sampler.sample(bqm, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+
+        # initial_states truncated to num_reads?
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='none', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='random', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+
+        # 2 fixed initial states, repeated 5 times
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # can't tile empty states
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states_generator='tile', num_reads=10)
+
+        # not enough initial states
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states_generator='none', num_reads=3)
+
+        # initial_states incompatible with the bqm
+        init = dimod.SampleSet.from_samples({'a': 1, 'b': 1}, vartype='SPIN', energy=0)
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states=init)
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
