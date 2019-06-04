@@ -307,6 +307,30 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         with self.assertRaises(ValueError):
             resp = sampler.sample(bqm, initial_states=init)
 
+    def test_soft_num_reads(self):
+        """Number of reads adapts to initial_states size, if provided."""
+
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
+                                                 {'a': -1, 'b': -1, 'c': -1}], bqm)
+        sampler = Neal()
+
+        # default num_reads == 1
+        self.assertEqual(len(sampler.sample(bqm)), 1)
+        self.assertEqual(len(sampler.sample(bqm, initial_states_generator="random")), 1)
+
+        # with initial_states, num_reads == len(initial_states)
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init)), 2)
+
+        # ... but explicit truncation works too
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init, num_reads=1)), 1)
+
+        # if num_reads explicitly given together with initial_states, they are expanded
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init, num_reads=3)), 3)
+
+        # if num_reads explicitly given together without initial_states, they are generated
+        self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
+
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
     def test_empty_problem(self):
