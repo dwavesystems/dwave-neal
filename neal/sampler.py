@@ -119,7 +119,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
     def sample(self, bqm, beta_range=None, num_reads=None, num_sweeps=1000,
                beta_schedule_type="geometric", seed=None, interrupt_function=None,
-               initial_states=None, initial_states_generator="random"):
+               initial_states=None, initial_states_generator="random", **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -216,6 +216,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         """
 
+        if 'sweeps' in kwargs:
+            warnings.warn("The 'sweeps' parameter is deprecated in "
+                          "favor of 'num_sweeps'.", DeprecationWarning)
+            num_sweeps = kwargs.get('sweeps', num_sweeps)
+
         # if already index-labelled, just continue
         if all(v in bqm.linear for v in range(len(bqm))):
             _bqm = bqm
@@ -290,7 +295,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             init_vartype = initial_states.vartype
         else:
             warnings.warn("tuple format for 'initial_states' is deprecated "
-                            "in favor of 'dimod.SampleSet'.", DeprecationWarning)
+                          "in favor of 'dimod.SampleSet'.", DeprecationWarning)
             initial_states_array, init_label_map = initial_states
 
             # assume initial states samples have bqm's vartype

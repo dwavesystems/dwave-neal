@@ -18,6 +18,7 @@ import unittest
 import numpy as np
 import copy
 import itertools
+import warnings
 
 import dimod
 
@@ -330,6 +331,17 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         # if num_reads explicitly given together without initial_states, they are generated
         self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
+
+    def test_deprecated_sweeps_name(self):
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1})
+        sampler = Neal()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+
+            with self.assertRaises(DeprecationWarning):
+                sampler.sample(bqm, sweeps=10)
+
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
