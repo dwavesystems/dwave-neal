@@ -82,7 +82,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         beta_schedule_type
         num_reads
         seed
-        sweeps
+        num_sweeps
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
@@ -107,7 +107,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         # create a local copy in case folks for some reason want to modify them
         self.parameters = {'beta_range': [],
                            'num_reads': [],
-                           'sweeps': [],
+                           'num_sweeps': [],
                            'beta_schedule_type': ['beta_schedule_options'],
                            'seed': [],
                            'interrupt_function': [],
@@ -117,9 +117,9 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         self.properties = {'beta_schedule_options': ('linear', 'geometric')
                            }
 
-    def sample(self, bqm, beta_range=None, num_reads=None, sweeps=1000,
+    def sample(self, bqm, beta_range=None, num_reads=None, num_sweeps=1000,
                beta_schedule_type="geometric", seed=None, interrupt_function=None,
-               initial_states=None, initial_states_generator="random"):
+               initial_states=None, initial_states_generator="random", **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -137,7 +137,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 selected to match the number of initial states given. If initial states
                 are not provided, only one read is performed.
 
-            sweeps (int, optional, default=1000):
+            num_sweeps (int, optional, default=1000):
                 Number of sweeps or steps.
 
             beta_schedule_type (string, optional, default='geometric'):
@@ -206,7 +206,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             >>> response = sampler.sample(bqm)
             >>> # Run with specified parameters
             >>> response = sampler.sample(bqm, seed=1234, beta_range=[0.1, 4.2],
-            ...                                num_reads=1, sweeps=20,
+            ...                                num_reads=1, num_sweeps=20,
             ...                                beta_schedule_type='geometric')
             >>> # Reuse a seed
             >>> a1 = next((sampler.sample(bqm, seed=88)).samples())['a']
@@ -215,6 +215,11 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             True
 
         """
+
+        if 'sweeps' in kwargs:
+            warnings.warn("The 'sweeps' parameter is deprecated in "
+                          "favor of 'num_sweeps'.", DeprecationWarning)
+            num_sweeps = kwargs.get('sweeps', num_sweeps)
 
         # if already index-labelled, just continue
         if all(v in bqm.linear for v in range(len(bqm))):
@@ -231,7 +236,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             _bqm = bqm.relabel_variables(mapping, inplace=False)
             use_label_map = True
 
-        # beta_range, sweeps are handled by simulated_annealing
+        # beta_range, num_sweeps are handled by simulated_annealing
 
         if not (seed is None or isinstance(seed, Integral)):
             raise TypeError("'seed' should be None or a positive integer")
@@ -263,8 +268,8 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         if beta_range is None:
             beta_range = _default_ising_beta_range(linear, quadratic)
 
-        sweeps_per_beta = max(1, sweeps // 1000.0)
-        num_betas = int(math.ceil(sweeps / sweeps_per_beta))
+        num_sweeps_per_beta = max(1, num_sweeps // 1000.0)
+        num_betas = int(math.ceil(num_sweeps / num_sweeps_per_beta))
         if beta_schedule_type == "linear":
             # interpolate a linear beta schedule
             beta_schedule = np.linspace(*beta_range, num=num_betas)
@@ -290,7 +295,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             init_vartype = initial_states.vartype
         else:
             warnings.warn("tuple format for 'initial_states' is deprecated "
-                            "in favor of 'dimod.SampleSet'.", DeprecationWarning)
+                          "in favor of 'dimod.SampleSet'.", DeprecationWarning)
             initial_states_array, init_label_map = initial_states
 
             # assume initial states samples have bqm's vartype
@@ -336,7 +341,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         # run the simulated annealing algorithm
         samples, energies = sa.simulated_annealing(
             num_reads, h, coupler_starts, coupler_ends, coupler_weights,
-            sweeps_per_beta, beta_schedule,
+            num_sweeps_per_beta, beta_schedule,
             seed, numpy_initial_states, interrupt_function)
 
         off = _bqm.spin.offset
