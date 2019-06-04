@@ -216,9 +216,6 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         """
 
-        if not isinstance(bqm, dimod.BinaryQuadraticModel):
-            raise TypeError("'bqm' should be a 'dimod.BinaryQuadraticModel' instance")
-
         # if already index-labelled, just continue
         if all(v in bqm.linear for v in range(len(bqm))):
             _bqm = bqm
