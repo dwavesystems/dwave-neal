@@ -129,15 +129,15 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
             self.assertRaises(ValueError, sampler.sample_ising, {}, {}, seed=bad_seed)
 
         # make sure it can accept large seeds
-        sampler.sample_ising(h, J, seed=2**63, num_reads=1, sweeps=1)
+        sampler.sample_ising(h, J, seed=2**63, num_reads=1, num_sweeps=1)
 
         # no need to do a bunch of sweeps, in fact the less we do the more
         # sure we can be that the same seed is returning the same result
         all_samples = []
 
         for seed in (1, 25, 2352, 736145, 5682453, 923759283623):
-            response0 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
-            response1 = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=10, seed=seed)
+            response0 = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=10, seed=seed)
+            response1 = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=10, seed=seed)
 
             samples0 = response0.record.sample
             samples1 = response1.record.sample
@@ -164,7 +164,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                 (3, 5): -1,
                 }
 
-        resp = sampler.sample_ising(h, J, sweeps=1000, num_reads=100)
+        resp = sampler.sample_ising(h, J, num_sweeps=1000, num_reads=100)
 
         row, col = resp.record.sample.shape
 
@@ -217,7 +217,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         initial_state_array = 2*np_rand.randint(2, size=(num_reads, num_vars)) - 1
         init_labels = dict(zip(var_labels, np_rand.permutation(num_vars)))
 
-        resp = sampler.sample_ising(h, J, num_reads=num_reads, sweeps=0, seed=seed, 
+        resp = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=0, seed=seed,
                                     initial_states=(initial_state_array, init_labels))
 
         for v in var_labels:
@@ -235,7 +235,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         expected_response = dimod.SampleSet.from_samples_bqm(initial_states_array, bqm)
 
-        response = Neal().sample(bqm, sweeps=0, initial_states=(initial_states_array, None))
+        response = Neal().sample(bqm, num_sweeps=0, initial_states=(initial_states_array, None))
 
         # if initial_states are not properly converted by the sample method
         # (from binary to ising), energy levels will not match
