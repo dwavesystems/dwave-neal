@@ -227,7 +227,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                             "no sweeps")
 
     def test_binary_initial_states(self):
-        bqm = dimod.BQM.from_ising({}, {(0,1): 1}).binary
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {(0,1): 1}).binary
         num_vars = len(bqm)
         num_reads = 10
 
@@ -243,13 +243,93 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertTrue(np.array_equal(response.record.energy, expected_response.record.energy))
 
     def test_sampleset_initial_states(self):
-        bqm = dimod.BQM.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
         initial_states = dimod.SampleSet.from_samples_bqm({'a': 1, 'b': -1, 'c': 1}, bqm)
 
         response = Neal().sample(bqm, initial_states=initial_states, num_reads=1)
 
         self.assertEqual(len(response), 1)
         self.assertEqual(response.first.energy, -1)
+
+    def test_initial_states_generator(self):
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
+                                                 {'a': -1, 'b': -1, 'c': -1}], bqm)
+        sampler = Neal()
+
+        # 2 fixed initial state, 8 random
+        resp = sampler.sample(bqm, initial_states=init, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # 2 fixed initial states, 8 random, explicit
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='random', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # all random
+        resp = sampler.sample(bqm, initial_states_generator='random', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # all random
+        resp = sampler.sample(bqm, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+
+        # zero-length init states in tuple format, extended by random samples
+        zero_init_tuple = (np.empty((0, 3)), None)
+        resp = sampler.sample(bqm, initial_states=zero_init_tuple, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # initial_states truncated to num_reads?
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='none', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='random', num_reads=1)
+        self.assertEqual(len(resp), 1)
+
+
+        # 2 fixed initial states, repeated 5 times
+        resp = sampler.sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=10)
+        self.assertEqual(len(resp), 10)
+
+        # can't tile empty states
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states_generator='tile', num_reads=10)
+
+        # not enough initial states
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states_generator='none', num_reads=3)
+
+        # initial_states incompatible with the bqm
+        init = dimod.SampleSet.from_samples({'a': 1, 'b': 1}, vartype='SPIN', energy=0)
+        with self.assertRaises(ValueError):
+            resp = sampler.sample(bqm, initial_states=init)
+
+    def test_soft_num_reads(self):
+        """Number of reads adapts to initial_states size, if provided."""
+
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
+                                                 {'a': -1, 'b': -1, 'c': -1}], bqm)
+        sampler = Neal()
+
+        # default num_reads == 1
+        self.assertEqual(len(sampler.sample(bqm)), 1)
+        self.assertEqual(len(sampler.sample(bqm, initial_states_generator="random")), 1)
+
+        # with initial_states, num_reads == len(initial_states)
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init)), 2)
+
+        # ... but explicit truncation works too
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init, num_reads=1)), 1)
+
+        # if num_reads explicitly given together with initial_states, they are expanded
+        self.assertEqual(len(sampler.sample(bqm, initial_states=init, num_reads=3)), 3)
+
+        # if num_reads explicitly given together without initial_states, they are generated
+        self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
 
 
 class TestDefaultIsingBetaRange(unittest.TestCase):
@@ -335,7 +415,7 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Get heuristic solution
         sampler = Neal()
-        response = sampler.sample(jss_bqm, beta_schedule_type="linear")
+        response = sampler.sample(jss_bqm, beta_schedule_type="linear", num_reads=10)
         _, response_energy, _ = next(response.data())
 
         # Compare energies
@@ -357,7 +437,7 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Solve ising problem
         sampler = Neal()
-        response = sampler.sample_ising({}, J, beta_schedule_type="geometric")
+        response = sampler.sample_ising({}, J, beta_schedule_type="geometric", num_reads=10)
         _, response_energy, _ = next(response.data())
 
         # Note: lowest energy found was -3088 with a different benchmarking tool
