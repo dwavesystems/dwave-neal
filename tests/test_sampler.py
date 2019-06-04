@@ -415,7 +415,7 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Get heuristic solution
         sampler = Neal()
-        response = sampler.sample(jss_bqm, beta_schedule_type="linear")
+        response = sampler.sample(jss_bqm, beta_schedule_type="linear", num_reads=10)
         _, response_energy, _ = next(response.data())
 
         # Compare energies
@@ -437,7 +437,7 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Solve ising problem
         sampler = Neal()
-        response = sampler.sample_ising({}, J, beta_schedule_type="geometric")
+        response = sampler.sample_ising({}, J, beta_schedule_type="geometric", num_reads=10)
         _, response_energy, _ = next(response.data())
 
         # Note: lowest energy found was -3088 with a different benchmarking tool
