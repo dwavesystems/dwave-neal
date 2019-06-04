@@ -274,6 +274,11 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertEqual(len(resp), 10)
 
 
+        # zero-length init states in tuple format, extended by random samples
+        zero_init_tuple = (np.empty((0, 3)), None)
+        resp = sampler.sample(bqm, initial_states=zero_init_tuple, num_reads=10)
+        self.assertEqual(len(resp), 10)
+
         # initial_states truncated to num_reads?
         resp = sampler.sample(bqm, initial_states=init, initial_states_generator='none', num_reads=1)
         self.assertEqual(len(resp), 1)

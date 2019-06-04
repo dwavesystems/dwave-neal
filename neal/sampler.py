@@ -111,13 +111,15 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                            'beta_schedule_type': ['beta_schedule_options'],
                            'seed': [],
                            'interrupt_function': [],
-                           'initial_states': []}
+                           'initial_states': [],
+                           'initial_states_generator': [],
+                           }
         self.properties = {'beta_schedule_options': ('linear', 'geometric')
                            }
 
     def sample(self, bqm, beta_range=None, num_reads=10, sweeps=1000,
-               beta_schedule_type="geometric", seed=None,
-               interrupt_function=None, initial_states=None):
+               beta_schedule_type="geometric", seed=None, interrupt_function=None,
+               initial_states=None, initial_states_generator="random"):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -211,6 +213,9 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
         """
 
+        if not isinstance(bqm, dimod.BinaryQuadraticModel):
+            raise TypeError("'bqm' should be a 'dimod.BinaryQuadraticModel' instance")
+
         # if already index-labelled, just continue
         if all(v in bqm.linear for v in range(len(bqm))):
             _bqm = bqm
@@ -238,6 +243,10 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         if isinstance(seed, Integral) and not (0 < seed < (2**64 - 1)):
             error_msg = "'seed' should be an integer between 0 and 2^64 - 1"
             raise ValueError(error_msg)
+
+        if seed is None:
+            # pick a random seed
+            seed = randint(0, (1 << 64 - 1))
 
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
@@ -270,53 +279,62 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         else:
             raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
-        if seed is None:
-            # pick a random seed
-            seed = randint(0, (1 << 64 - 1))
-
-        np_rand = np.random.RandomState(seed % 2**32)
-
-        states_shape = (num_reads, num_variables)
+        _generators = {
+            'none': self._none_generator,
+            'tile': self._tile_generator,
+            'random': self._random_generator
+        }
 
         if initial_states is None:
-            numpy_initial_states = 2 * np_rand.randint(2, size=states_shape).astype(np.int8) - 1
+            initial_states = (np.empty((0, num_variables)), None)
 
+        if isinstance(initial_states, dimod.SampleSet):
+            initial_states_array = initial_states.record.sample
+            init_label_map = dict(map(reversed, enumerate(initial_states.variables)))
+            init_vartype = initial_states.vartype
         else:
-            if isinstance(initial_states, dimod.SampleSet):
-                initial_states_array = initial_states.record.sample
-                variables = initial_states.variables
-                init_label_map = dict(zip(variables, range(len(variables))))
-            else:
-                warnings.warn("tuple format for 'initial_states' is deprecated "
-                              "in favor of 'dimod.SampleSet'.", DeprecationWarning)
-                initial_states_array, init_label_map = initial_states
+            warnings.warn("tuple format for 'initial_states' is deprecated "
+                            "in favor of 'dimod.SampleSet'.", DeprecationWarning)
+            initial_states_array, init_label_map = initial_states
 
-            if not initial_states_array.shape == states_shape:
-                raise ValueError("`initial_states` must have shape "
-                                 "{}".format(states_shape))
+            # assume initial states samples have bqm's vartype
+            init_vartype = bqm.vartype
 
-            if init_label_map is not None:
-                identity = lambda i: i
-                get_label = inverse_mapping.get if use_label_map else identity
-                ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
-                initial_states_array = initial_states_array[:, ordered_labels]
+        if initial_states_array.size:
+            if init_label_map and set(init_label_map) ^ bqm.variables:
+                raise ValueError("mismatch between variables in 'initial_states' and 'bqm'")
+            elif initial_states_array.shape[1] != num_variables:
+                raise ValueError("mismatch in number of variables in 'initial_states' and 'bqm'")
 
-            numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
+        if initial_states_generator not in _generators:
+            raise ValueError("unknown value for 'initial_states_generator'")
 
-            # convert to ising, if provided in binary
-            if bqm.vartype == dimod.BINARY:
-                numpy_initial_states = 2 * numpy_initial_states - 1
-            elif bqm.vartype != dimod.SPIN:
-                raise TypeError("unsupported vartype")
+        # reorder initial states array according to label map
+        if init_label_map is not None:
+            identity = lambda i: i
+            get_label = inverse_mapping.get if use_label_map else identity
+            ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
+            initial_states_array = initial_states_array[:, ordered_labels]
+
+        numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
+
+        # convert to ising, if provided in binary
+        if init_vartype == dimod.BINARY:
+            numpy_initial_states = 2 * numpy_initial_states - 1
+        elif init_vartype != dimod.SPIN:
+            raise TypeError("unsupported vartype")
+
+        # extrapolate and/or truncate initial states, if necessary
+        extrapolate = _generators[initial_states_generator]
+        numpy_initial_states = extrapolate(numpy_initial_states, num_reads, num_variables, seed)
+        numpy_initial_states = self._truncate_filter(numpy_initial_states, num_reads)
 
         # run the simulated annealing algorithm
-        samples, energies = sa.simulated_annealing(num_reads, h,
-                                                   coupler_starts, coupler_ends,
-                                                   coupler_weights,
-                                                   sweeps_per_beta, beta_schedule,
-                                                   seed,
-                                                   numpy_initial_states,
-                                                   interrupt_function)
+        samples, energies = sa.simulated_annealing(
+            num_reads, h, coupler_starts, coupler_ends, coupler_weights,
+            sweeps_per_beta, beta_schedule,
+            seed, numpy_initial_states, interrupt_function)
+
         off = _bqm.spin.offset
         info = {
             "beta_range": beta_range,
@@ -334,6 +352,48 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             response.relabel_variables(inverse_mapping, inplace=True)
 
         return response
+
+    @staticmethod
+    def _none_generator(initial_states, num_reads, *args, **kwargs):
+        if len(initial_states) < num_reads:
+            raise ValueError("insufficient number of initial states given")
+        return initial_states
+
+    @staticmethod
+    def _tile_generator(initial_states, num_reads, *args, **kwargs):
+        if len(initial_states) < 1:
+            raise ValueError("cannot tile an empty sample set of initial states")
+
+        if len(initial_states) >= num_reads:
+            return initial_states
+
+        reps, rem = divmod(num_reads, len(initial_states))
+
+        initial_states = np.tile(initial_states, (reps, 1))
+        initial_states = np.vstack((initial_states, initial_states[:rem]))
+
+        return initial_states
+
+    @staticmethod
+    def _random_generator(initial_states, num_reads, num_variables, seed):
+        rem = max(0, num_reads - len(initial_states))
+
+        np_rand = np.random.RandomState(seed % 2**32)
+        random_states = 2 * np_rand.randint(2, size=(rem, num_variables)).astype(np.int8) - 1
+
+        # handle zero-length array of input states
+        if len(initial_states):
+            initial_states = np.vstack((initial_states, random_states))
+        else:
+            initial_states = random_states
+
+        return initial_states
+
+    @staticmethod
+    def _truncate_filter(initial_states, num_reads):
+        if len(initial_states) > num_reads:
+            initial_states = initial_states[:num_reads]
+        return initial_states
 
 
 Neal = SimulatedAnnealingSampler
