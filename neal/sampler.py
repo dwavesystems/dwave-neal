@@ -285,17 +285,18 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             'random': self._random_generator
         }
 
-        # unpack initial_states from sampleset/samples_like to numpy array and label map
-        if initial_states is None:
-            initial_states = (np.empty((0, num_variables)), None)
-
+        # unpack initial_states from sampleset/samples_like to numpy array, label map and vartype
         if isinstance(initial_states, dimod.SampleSet):
             initial_states_array = initial_states.record.sample
             init_label_map = dict(map(reversed, enumerate(initial_states.variables)))
             init_vartype = initial_states.vartype
         else:
-            warnings.warn("tuple format for 'initial_states' is deprecated "
-                          "in favor of 'dimod.SampleSet'.", DeprecationWarning)
+            if initial_states is None:
+                initial_states = (np.empty((0, num_variables)), None)
+            else:
+                warnings.warn("tuple format for 'initial_states' is deprecated "
+                            "in favor of 'dimod.SampleSet'.", DeprecationWarning)
+
             initial_states_array, init_label_map = initial_states
 
             # assume initial states samples have bqm's vartype

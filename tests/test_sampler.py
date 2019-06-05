@@ -205,7 +205,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         self.assertEqual(len(resp), 1)
 
-    def test_ising_initial_states(self):
+    def test_ising_tuple_initial_states(self):
         sampler = Neal()
         var_labels = ["a", "b", "c", "d"]
         num_vars = len(var_labels)
@@ -218,8 +218,11 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         initial_state_array = 2*np_rand.randint(2, size=(num_reads, num_vars)) - 1
         init_labels = dict(zip(var_labels, np_rand.permutation(num_vars)))
 
-        resp = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=0, seed=seed,
-                                    initial_states=(initial_state_array, init_labels))
+        # sample, but ignore deprecation warnings (tuple format for initial_states)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            resp = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=0, seed=seed,
+                                        initial_states=(initial_state_array, init_labels))
 
         for v in var_labels:
             self.assertTrue(np.array_equal(resp.record.sample[:, resp.variables.index(v)], 
@@ -227,7 +230,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                             "Samples were not the same as initial states with "
                             "no sweeps")
 
-    def test_binary_initial_states(self):
+    def test_binary_tuple_initial_states(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {(0,1): 1}).binary
         num_vars = len(bqm)
         num_reads = 10
@@ -236,7 +239,10 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         expected_response = dimod.SampleSet.from_samples_bqm(initial_states_array, bqm)
 
-        response = Neal().sample(bqm, num_sweeps=0, initial_states=(initial_states_array, None))
+        # sample, but ignore deprecation warnings (tuple format for initial_states)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            response = Neal().sample(bqm, num_sweeps=0, initial_states=(initial_states_array, None))
 
         # if initial_states are not properly converted by the sample method
         # (from binary to ising), energy levels will not match
@@ -277,8 +283,14 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         # zero-length init states in tuple format, extended by random samples
         zero_init_tuple = (np.empty((0, 3)), None)
-        resp = sampler.sample(bqm, initial_states=zero_init_tuple, num_reads=10)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            resp = sampler.sample(bqm, initial_states=zero_init_tuple, num_reads=10)
         self.assertEqual(len(resp), 10)
+
+        # explicit None for initial_states should use one random init state
+        resp = sampler.sample(bqm, initial_states=None)
+        self.assertEqual(len(resp), 1)
 
         # initial_states truncated to num_reads?
         resp = sampler.sample(bqm, initial_states=init, initial_states_generator='none', num_reads=1)
