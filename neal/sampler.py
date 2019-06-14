@@ -24,6 +24,7 @@ import warnings
 
 from numbers import Integral
 from random import randint
+from collections import defaultdict
 
 import dimod
 import numpy as np
@@ -33,7 +34,7 @@ from six import itervalues, iteritems
 import neal.simulated_annealing as sa
 
 
-__all__ = ["Neal", "SimulatedAnnealingSampler"]
+__all__ = ["Neal", "SimulatedAnnealingSampler", "default_beta_range"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler):
@@ -434,7 +435,7 @@ def _default_ising_beta_range(h, J):
     min_delta_energy = min(abs_biases)
 
     # Combine absolute biases by variable
-    abs_bias_dict = {k: abs(v) for k, v in h.items()}
+    abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
     for (k1, k2), v in J.items():
         abs_bias_dict[k1] += abs(v)
         abs_bias_dict[k2] += abs(v)
@@ -457,3 +458,8 @@ def _default_ising_beta_range(h, J):
     cold_beta = np.log(100) / min_delta_energy
 
     return [hot_beta, cold_beta]
+
+
+def default_beta_range(bqm):
+    ising = bqm.spin
+    return _default_ising_beta_range(ising.linear, ising.quadratic)
