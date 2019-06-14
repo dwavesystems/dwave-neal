@@ -33,7 +33,7 @@ from six import itervalues, iteritems
 import neal.simulated_annealing as sa
 
 
-__all__ = ["Neal", "SimulatedAnnealingSampler"]
+__all__ = ["Neal", "SimulatedAnnealingSampler", "default_beta_range"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler):
@@ -266,7 +266,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             coupler_starts, coupler_ends, coupler_weights = [], [], []
 
         if beta_range is None:
-            beta_range = _default_ising_beta_range(linear, quadratic)
+            beta_range = default_ising_beta_range(linear, quadratic)
 
         num_sweeps_per_beta = max(1, num_sweeps // 1000.0)
         num_betas = int(math.ceil(num_sweeps / num_sweeps_per_beta))
@@ -457,3 +457,8 @@ def _default_ising_beta_range(h, J):
     cold_beta = np.log(100) / min_delta_energy
 
     return [hot_beta, cold_beta]
+
+
+def default_beta_range(bqm):
+    ising = bqm.spin
+    return _default_ising_beta_range(ising.linear, ising.quadratic)
