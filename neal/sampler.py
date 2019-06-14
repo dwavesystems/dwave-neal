@@ -24,6 +24,7 @@ import warnings
 
 from numbers import Integral
 from random import randint
+from collections import defaultdict
 
 import dimod
 import numpy as np
@@ -266,7 +267,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             coupler_starts, coupler_ends, coupler_weights = [], [], []
 
         if beta_range is None:
-            beta_range = default_ising_beta_range(linear, quadratic)
+            beta_range = _default_ising_beta_range(linear, quadratic)
 
         num_sweeps_per_beta = max(1, num_sweeps // 1000.0)
         num_betas = int(math.ceil(num_sweeps / num_sweeps_per_beta))
@@ -434,7 +435,7 @@ def _default_ising_beta_range(h, J):
     min_delta_energy = min(abs_biases)
 
     # Combine absolute biases by variable
-    abs_bias_dict = {k: abs(v) for k, v in h.items()}
+    abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
     for (k1, k2), v in J.items():
         abs_bias_dict[k1] += abs(v)
         abs_bias_dict[k2] += abs(v)
