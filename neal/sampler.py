@@ -357,33 +357,32 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             seed, numpy_initial_states, interrupt_function)
 
         # change the format according to answer_mode
-        if 'answer_mode' in kwargs:
-            if kwargs['answer_mode'] == 'raw':
-                num_occurrences = np.ones(len(samples))
-            elif kwargs['answer_mode'] == 'histogram':
-                sort_index = np.argsort(energies)
-                samples_sorted = samples[sort_index]
-                energies_sorted = energies[sort_index]
+        if answer_mode == 'histogram':
+            sort_index = np.argsort(energies)
+            samples_sorted = samples[sort_index]
+            energies_sorted = energies[sort_index]
 
-                samples = np.empty((0, samples.shape[1]), int)
-                energies = np.empty((0), int)
-                num_occurrences = np.empty((0), int)
+            samples = np.empty((0, samples.shape[1]), int)
+            energies = np.empty((0), int)
+            num_occurrences = np.empty((0), int)
 
-                count_duplications = 1
-                for i in range(1, len(samples_sorted)):
-                    if (energies_sorted[i - 1] == energies_sorted[i]) \
-                            and (samples_sorted[i - 1].all() == samples_sorted[i].all()):
-                        count_duplications += 1
-                    else:
-                        samples = np.append(samples, samples_sorted[[i - 1]], axis=0)
-                        energies = np.append(energies, energies_sorted[i - 1])
-                        num_occurrences = np.append(num_occurrences, count_duplications)
-                        count_duplications = 1
-                samples = np.append(samples, samples_sorted[[len(samples_sorted) - 1]], axis=0)
-                energies = np.append(energies, energies_sorted[len(energies_sorted) - 1])
-                num_occurrences = np.append(num_occurrences, count_duplications)
-        else:
+            count_duplications = 1
+            for i in range(1, len(samples_sorted)):
+                if (energies_sorted[i - 1] == energies_sorted[i]) \
+                        and (samples_sorted[i - 1].all() == samples_sorted[i].all()):
+                    count_duplications += 1
+                else:
+                    samples = np.append(samples, samples_sorted[[i - 1]], axis=0)
+                    energies = np.append(energies, energies_sorted[i - 1])
+                    num_occurrences = np.append(num_occurrences, count_duplications)
+                    count_duplications = 1
+            samples = np.append(samples, samples_sorted[[len(samples_sorted) - 1]], axis=0)
+            energies = np.append(energies, energies_sorted[len(energies_sorted) - 1])
+            num_occurrences = np.append(num_occurrences, count_duplications)
+        elif answer_mode == 'raw':
             num_occurrences = np.ones(len(samples))
+        else:
+            raise ValueError("'answer_mode' should be a 'histogram' or 'raw'")
         off = _bqm.spin.offset
         info = {
             "beta_range": beta_range,

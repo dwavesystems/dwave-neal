@@ -88,7 +88,8 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         sampler = Neal()
         h = {'a': 0, 'b': -1, 'c': 2}
         J = {('a', 'b'): -1, ('b', 'c'): 2, ('a', 'c'): 4}
-        response1 = sampler.sample_ising(h, J, answer_mode='histogram', num_reads=1)
+        response1 = sampler.sample_ising(h, J, answer_mode='histogram', num_reads=10)
+        print(response1)
         response2 = sampler.sample_ising(h, J, answer_mode='raw', num_reads=1)
         self.assertEqual(response1, response2)
 
@@ -111,9 +112,10 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         count_dict1 = collections.defaultdict(int)
         count_dict2 = collections.defaultdict(int)
         for sample, energy, num_occurrences in response1.data():
-            count_dict1[tuple(sample.values())] += num_occurrences
+            count_dict1[tuple(sample.values())] = num_occurrences
         for sample, energy, num_occurrences in response2.data():
             count_dict2[tuple(sample.values())] += num_occurrences
+        self.assertDictEqual(count_dict1, count_dict2)
 
     def test_num_reads(self):
         sampler = Neal()
