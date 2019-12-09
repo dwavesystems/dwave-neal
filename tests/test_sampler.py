@@ -19,6 +19,7 @@ import numpy as np
 import copy
 import itertools
 import warnings
+import collections
 
 import dimod
 
@@ -82,6 +83,37 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         response = sampler.sample_ising(h, J)
 
         self.assertIsInstance(response, dimod.SampleSet, "Sampler returned an unexpected response type")
+
+    def test_answer_mode(self):
+        sampler = Neal()
+        h = {'a': 0, 'b': -1, 'c': 2}
+        J = {('a', 'b'): -1, ('b', 'c'): 2, ('a', 'c'): 4}
+        response1 = sampler.sample_ising(h, J, answer_mode='histogram', num_reads=1)
+        response2 = sampler.sample_ising(h, J, answer_mode='raw', num_reads=1)
+        self.assertEqual(response1, response2)
+
+        h = {i:i-15 for i in range(30)}
+        J = {(i, j) : i+j-20 for i in range(30) for j in range(30) if i < j}
+
+        num_reads = 100
+        response1 = sampler.sample_ising(h, J, answer_mode='histogram', num_reads=num_reads)
+        response2 = sampler.sample_ising(h, J, answer_mode='raw', num_reads=num_reads)
+        self.assertEqual(num_reads, response1.record.num_occurrences.sum())
+        self.assertEqual(num_reads, response2.record.num_occurrences.sum())
+
+        energy_prev = -np.inf
+        for sample, energy, num_occurrences in response1.data():
+            bqm = dimod.BinaryQuadraticModel(h, J, offset=0, vartype=dimod.SPIN)
+            self.assertEqual(bqm.energy(sample), energy)
+            self.assertGreaterEqual(energy, energy_prev)
+            energy_prev=energy
+
+        count_dict1 = collections.defaultdict(int)
+        count_dict2 = collections.defaultdict(int)
+        for sample, energy, num_occurrences in response1.data():
+            count_dict1[tuple(sample.values())] += num_occurrences
+        for sample, energy, num_occurrences in response2.data():
+            count_dict2[tuple(sample.values())] += num_occurrences
 
     def test_num_reads(self):
         sampler = Neal()

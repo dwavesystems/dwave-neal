@@ -120,7 +120,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
 
     def sample(self, bqm, beta_range=None, num_reads=None, num_sweeps=1000,
                beta_schedule_type="geometric", seed=None, interrupt_function=None,
-               initial_states=None, initial_states_generator="random", **kwargs):
+               initial_states=None, initial_states_generator="random", answer_mode='histogram', **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -184,6 +184,16 @@ class SimulatedAnnealingSampler(dimod.Sampler):
                 * "random":
                     Expands the specified initial states with randomly generated
                     states if fewer than `num_reads` or truncates if greater.
+
+            answer_mode (str, optional, default='histogram'):
+                Indicates how to return answers from the solver
+
+                * "histogram":
+                    Answers returned as a histogram sorted in order of increasing energies.
+                    Duplicate answers are merged and include a num_occurrences field.
+
+                * "raw":
+                    Answers returned individually in the order they were read from the solver.
 
             interrupt_function (function, optional):
                 If provided, interrupt_function is called with no parameters
@@ -346,6 +356,34 @@ class SimulatedAnnealingSampler(dimod.Sampler):
             num_sweeps_per_beta, beta_schedule,
             seed, numpy_initial_states, interrupt_function)
 
+        # change the format according to answer_mode
+        if 'answer_mode' in kwargs:
+            if kwargs['answer_mode'] == 'raw':
+                num_occurrences = np.ones(len(samples))
+            elif kwargs['answer_mode'] == 'histogram':
+                sort_index = np.argsort(energies)
+                samples_sorted = samples[sort_index]
+                energies_sorted = energies[sort_index]
+
+                samples = np.empty((0, samples.shape[1]), int)
+                energies = np.empty((0), int)
+                num_occurrences = np.empty((0), int)
+
+                count_duplications = 1
+                for i in range(1, len(samples_sorted)):
+                    if (energies_sorted[i - 1] == energies_sorted[i]) \
+                            and (samples_sorted[i - 1].all() == samples_sorted[i].all()):
+                        count_duplications += 1
+                    else:
+                        samples = np.append(samples, samples_sorted[[i - 1]], axis=0)
+                        energies = np.append(energies, energies_sorted[i - 1])
+                        num_occurrences = np.append(num_occurrences, count_duplications)
+                        count_duplications = 1
+                samples = np.append(samples, samples_sorted[[len(samples_sorted) - 1]], axis=0)
+                energies = np.append(energies, energies_sorted[len(energies_sorted) - 1])
+                num_occurrences = np.append(num_occurrences, count_duplications)
+        else:
+            num_occurrences = np.ones(len(samples))
         off = _bqm.spin.offset
         info = {
             "beta_range": beta_range,
@@ -354,6 +392,7 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         response = dimod.SampleSet.from_samples(
             samples,
             energy=energies+off,
+            num_occurrences=num_occurrences,
             info=info,
             vartype=dimod.SPIN
         )
