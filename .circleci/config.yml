@@ -292,7 +292,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - pyenv-{{ .Environment.CIRCLE_JOB }}
+            - pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
 
       - run:
           name: install python
@@ -302,7 +302,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.pyenv
-          key: pyenv-{{ .Environment.CIRCLE_JOB }}
+          key: pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
 
       - run:
           name: create virtualenv
