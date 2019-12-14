@@ -9,8 +9,9 @@ mock
 coverage
 codecov
 
+# sphinx requirement for py34
+colorama<=0.4.1; sys_platform == "win32"
+
 sphinx
 sphinx_rtd_theme
 recommonmark
-
-ipython
