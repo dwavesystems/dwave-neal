@@ -121,6 +121,11 @@ jobs:
       PYTHON: 3.8.0
       HOMEBREW_NO_AUTO_UPDATE: 1
 
+      # Force (lie about) macOS 10.9 binary compatibility.
+      # Needed for properly versioned wheels.
+      # See: https://github.com/MacPython/wiki/wiki/Spinning-wheels
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+
     working_directory: ~/repo
 
     steps: 
@@ -188,30 +193,35 @@ jobs:
     <<: *osx-tests-template
     environment:
       PYTHON: 3.7.4
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   test-osx-3.6:
     <<: *osx-tests-template
     environment:
       PYTHON: 3.6.5
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   test-osx-3.5:
     <<: *osx-tests-template
     environment:
       PYTHON: 3.5.5
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   test-osx-3.4:
     <<: *osx-tests-template
     environment:
       PYTHON: 3.4.8
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   test-osx-2.7:
     <<: *osx-tests-template
     environment:
       PYTHON: 2.7.15
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
 ##################################################################################################
@@ -278,6 +288,7 @@ jobs:
       xcode: "11.2.1"
     environment:
       PYTHON: 3.8.0
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
     working_directory: ~/repo
@@ -329,30 +340,35 @@ jobs:
     <<: *osx-build-template
     environment:
       PYTHON: 3.7.4
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   build-osx-3.6:
     <<: *osx-build-template
     environment:
       PYTHON: 3.6.5
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   build-osx-3.5:
     <<: *osx-build-template
     environment:
       PYTHON: 3.5.5
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   build-osx-3.4:
     <<: *osx-build-template
     environment:
       PYTHON: 3.4.8
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
   build-osx-2.7:
     <<: *osx-build-template
     environment:
       PYTHON: 2.7.15
+      MACOSX_DEPLOYMENT_TARGET: 10.9
       HOMEBREW_NO_AUTO_UPDATE: 1
 
 workflows:
