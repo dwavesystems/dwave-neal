@@ -74,14 +74,14 @@ jobs:
       - store_artifacts:
           path: ./dist
 
-      - run: &sdist-install-template
+      - run:
           name: test installing from sdist without cython
           command: |
             python -m virtualenv env_sdist
             . env_sdist/bin/activate
             pip install dist/dwave-neal-*.tar.gz
 
-      - run: &sdist-cython-install-template
+      - run:
           name: install sdist with cython
           command: |
             python -m virtualenv env_cython_sdist
@@ -185,9 +185,24 @@ jobs:
       - store_artifacts:
           path: ./dist
 
-      - run: *sdist-install-template
+      - run:
+          name: install sdist without cython
+          command: |
+            eval "$(pyenv init -)"
+            pyenv local $PYTHON
+            python -m virtualenv env_sdist
+            . env_sdist/bin/activate
+            pip install dist/dwave-neal-*.tar.gz
 
-      - run: *sdist-cython-install-template
+      - run:
+          name: install sdist with cython
+          command: |
+            eval "$(pyenv init -)"
+            pyenv local $PYTHON
+            python -m virtualenv env_cython_sdist
+            . env_cython_sdist/bin/activate
+            pip install cython
+            pip install dist/dwave-neal-*.tar.gz
 
   test-osx-3.7:
     <<: *osx-tests-template
