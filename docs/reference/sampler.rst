@@ -1,4 +1,4 @@
-.. _sampler:
+.. _sampler_neal:
 
 ===========================
 Simulated Annealing Sampler
