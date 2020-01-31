@@ -1,4 +1,4 @@
-.. _sdk_index:
+.. _sdk_index_neal:
 
 ==========
 dwave-neal
@@ -7,7 +7,7 @@ dwave-neal
 .. include:: /readmes/binarycsp.rst
    :start-after: index-start-marker
    :end-before: index-end-marker
-   
+
 .. include:: index.rst
    :start-after: sdk-start-marker
    :end-before: sdk-end-marker
