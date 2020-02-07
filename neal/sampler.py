@@ -14,7 +14,7 @@
 #
 # ================================================================================================
 """
-A dimod sampler_ that uses the simulated annealing algorithm.
+A dimod :term:`sampler` that uses the simulated annealing algorithm.
 
 """
 from __future__ import division

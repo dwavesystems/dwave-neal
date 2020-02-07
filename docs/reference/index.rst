@@ -1,4 +1,4 @@
-.. _reference:
+.. _reference_neal:
 
 Reference Documentation
 ***********************
