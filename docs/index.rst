@@ -18,6 +18,12 @@ Documentation
   :Release: |version|
   :Date: |today|
 
+.. note:: This documentation is for the latest version of
+   `dwave-neal <https://github.com/dwavesystems/dwave-neal>`_.
+   Documentation for the version currently installed by
+   `dwave-ocean-sdk <https://github.com/dwavesystems/dwave-ocean-sdk>`_
+   is here: :std:doc:`dwave-neal <oceandocs:docs_neal/sdk_index>`.
+
 .. sdk-start-marker
 
 .. toctree::
