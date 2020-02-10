@@ -1,6 +1,6 @@
 cython==0.28.5
 
-numpy==1.15.4
+numpy==1.18.1
 dimod==0.8.11
 six==1.12.0
 
