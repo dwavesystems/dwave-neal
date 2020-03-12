@@ -81,9 +81,12 @@ class SimulatedAnnealingSampler(dimod.Sampler):
         ...     print(kwarg)
         beta_range
         beta_schedule_type
+        initial_states
+        initial_states_generator
+        interrupt_function
         num_reads
-        seed
         num_sweeps
+        seed
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
