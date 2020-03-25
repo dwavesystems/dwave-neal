@@ -68,7 +68,7 @@ install_requires = ['dimod>=0.7.7',
                     'numpy>=1.14.0,<2.0.0',
                     'six>=1.11.0,<2.0.0']
 
-setup_requires = ['numpy>=1.14.0,<1.16.0']
+setup_requires = ['numpy>=1.14.0,<2.0.0']
 
 classifiers = [
     'License :: OSI Approved :: Apache Software License',

@@ -462,9 +462,9 @@ class TestHeuristicResponse(unittest.TestCase):
 
         # Optimal energy
         optimal_solution = {'b_0,0': 1, 'b_0,1': 0, 'b_0,2': 0, 'b_0,3': 0,
-                            'b_1,0': 0, 'b_1,1': 1, 'b_1,2': 0, 'b_1,3': 0,
-                            'g_0,0': 0, 'g_0,1': 1, 'g_0,2': 0, 'g_0,3': 0,
-                            'o_0,0': 1, 'o_0,1': 0, 'o_0,2': 0, 'o_0,3': 0,
+                            'b_1,0': 0, 'b_1,1': 1, 'b_1,2': 0,
+                            'g_0,0': 0, 'g_0,1': 1, 'g_0,2': 0,
+                            'o_0,0': 1, 'o_0,1': 0, 'o_0,2': 0,
                             'o_1,0': 0, 'o_1,1': 0, 'o_1,2': 1, 'o_1,3': 0}
         optimal_energy = jss_bqm.energy(optimal_solution) # Evaluates to 0.5
 
