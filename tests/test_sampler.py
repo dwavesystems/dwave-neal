@@ -129,14 +129,11 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         for bad_seed in (-1, -100, 2**65):
             self.assertRaises(ValueError, sampler.sample_ising, {}, {}, seed=bad_seed)
 
-        # make sure it can accept large seeds
-        sampler.sample_ising(h, J, seed=2**63, num_reads=1, num_sweeps=1)
-
         # no need to do a bunch of sweeps, in fact the less we do the more
         # sure we can be that the same seed is returning the same result
         all_samples = []
 
-        for seed in (1, 25, 2352, 736145, 5682453, 923759283623):
+        for seed in (1, 25, 2352, 736145, 5682453):
             response0 = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=10, seed=seed)
             response1 = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=10, seed=seed)
 
@@ -205,50 +202,6 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         self.assertEqual(len(resp), 1)
 
-    def test_ising_tuple_initial_states(self):
-        sampler = Neal()
-        var_labels = ["a", "b", "c", "d"]
-        num_vars = len(var_labels)
-        h = {v: -1 for v in var_labels}
-        J = {(u, v): 1 for u, v in itertools.combinations(var_labels, 2)}
-        num_reads = 100
-        seed = 1234567890
-
-        np_rand = np.random.RandomState(seed)
-        initial_state_array = 2*np_rand.randint(2, size=(num_reads, num_vars)) - 1
-        init_labels = dict(zip(var_labels, np_rand.permutation(num_vars)))
-
-        # sample, but ignore deprecation warnings (tuple format for initial_states)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            resp = sampler.sample_ising(h, J, num_reads=num_reads, num_sweeps=0, seed=seed,
-                                        initial_states=(initial_state_array, init_labels))
-
-        for v in var_labels:
-            self.assertTrue(np.array_equal(resp.record.sample[:, resp.variables.index(v)], 
-                                           initial_state_array[:, init_labels[v]]),
-                            "Samples were not the same as initial states with "
-                            "no sweeps")
-
-    def test_binary_tuple_initial_states(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {(0,1): 1}).binary
-        num_vars = len(bqm)
-        num_reads = 10
-
-        initial_states_array = np.random.randint(2, size=(num_reads, num_vars))
-
-        expected_response = dimod.SampleSet.from_samples_bqm(initial_states_array, bqm)
-
-        # sample, but ignore deprecation warnings (tuple format for initial_states)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            response = Neal().sample(bqm, num_sweeps=0, initial_states=(initial_states_array, None))
-
-        # if initial_states are not properly converted by the sample method
-        # (from binary to ising), energy levels will not match
-        self.assertTrue(np.array_equal(response.record.sample, expected_response.record.sample))
-        self.assertTrue(np.array_equal(response.record.energy, expected_response.record.energy))
-
     def test_sampleset_initial_states(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
         initial_states = dimod.SampleSet.from_samples_bqm({'a': 1, 'b': -1, 'c': 1}, bqm)
@@ -282,7 +235,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
 
         # zero-length init states in tuple format, extended by random samples
-        zero_init_tuple = (np.empty((0, 3)), None)
+        zero_init_tuple = (np.empty((0, 3)), ['a', 'b', 'c'])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             resp = sampler.sample(bqm, initial_states=zero_init_tuple, num_reads=10)
@@ -343,16 +296,6 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
         # if num_reads explicitly given together without initial_states, they are generated
         self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
-
-    def test_deprecated_sweeps_name(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1})
-        sampler = Neal()
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-
-            with self.assertRaises(DeprecationWarning):
-                sampler.sample(bqm, sweeps=10)
 
 
 class TestDefaultBetaRange(unittest.TestCase):
