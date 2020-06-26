@@ -44,19 +44,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         >>> sampler = neal.SimulatedAnnealingSampler()
         >>> h = {'a': 0.0, 'b': 0.0, 'c': 0.0}
         >>> J = {('a', 'b'): 1.0, ('b', 'c'): 1.0, ('a', 'c'): 1.0}
-        >>> response = sampler.sample_ising(h, J)
-        >>> for sample in response:  # doctest: +SKIP
-        ...     print(sample)
-        ... {'a': -1, 'b': 1, 'c': -1}
-        ... {'a': -1, 'b': 1, 'c': 1}
-        ... {'a': 1, 'b': 1, 'c': -1}
-        ... {'a': 1, 'b': -1, 'c': -1}
-        ... {'a': 1, 'b': -1, 'c': -1}
-        ... {'a': 1, 'b': -1, 'c': -1}
-        ... {'a': -1, 'b': 1, 'c': 1}
-        ... {'a': 1, 'b': 1, 'c': -1}
-        ... {'a': -1, 'b': -1, 'c': 1}
-        ... {'a': -1, 'b': 1, 'c': 1}
+        >>> sampleset = sampler.sample_ising(h, J, num_reads=10)
+        >>> print(sampleset.first.energy)
+        -1.0
 
     """
 
@@ -194,9 +184,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             >>> sampler = neal.SimulatedAnnealingSampler()
             >>> bqm = dimod.BinaryQuadraticModel({'a': .5, 'b': -.5}, {('a', 'b'): -1}, 0.0, dimod.SPIN)
             >>> # Run with default parameters
-            >>> response = sampler.sample(bqm)
+            >>> sampleset = sampler.sample(bqm)
             >>> # Run with specified parameters
-            >>> response = sampler.sample(bqm, seed=1234, beta_range=[0.1, 4.2],
+            >>> sampleset = sampler.sample(bqm, seed=1234, beta_range=[0.1, 4.2],
             ...                                num_reads=1, num_sweeps=20,
             ...                                beta_schedule_type='geometric')
             >>> # Reuse a seed
