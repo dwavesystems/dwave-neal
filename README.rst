@@ -31,7 +31,7 @@ Example Usage
 
     h = {0: -1, 1: -1}
     J = {(0, 1): -1}
-    response = sampler.sample_ising(h, J)
+    sampleset = sampler.sample_ising(h, J)
 
 .. index-end-marker
 
