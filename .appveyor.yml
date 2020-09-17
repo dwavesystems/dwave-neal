@@ -1,14 +1,11 @@
 environment:
 
   # PyPI login
-  username: dwtools
-  password:
+  TWINE_USERNAME: dwtools
+  TWINE_PASSWORD:
     secure: 9/YAQhmz9Kb1ZeXzhBYeQA==
 
   matrix:
-
-    # https://www.appveyor.com/docs/build-environment/#python
-
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
@@ -22,8 +19,8 @@ install:
   - "%PYTHON%\\python.exe --version"
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt -r tests\\requirements.txt"
 
-  # for python34-x64
-  - echo "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 > "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\amd64/vcvars64.bat"
+  # required to link py35 (x86 and x64)
+  - set PATH=%PATH%;C:\Program Files (x86)\Windows Kits\8.1\bin\x86
 
 build_script:
   - "%PYTHON%\\python.exe setup.py build_ext --inplace"
@@ -35,7 +32,4 @@ deploy_script:
   - "%PYTHON%\\python.exe -m pip install twine"
   - "%PYTHON%\\python.exe -m pip install wheel"  
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "echo [pypi] > %USERPROFILE%\\.pypirc"
-  - "echo username: %username% >> %USERPROFILE%\\.pypirc"
-  - "echo password: %password% >> %USERPROFILE%\\.pypirc"
   - cmd: "if [%APPVEYOR_REPO_TAG%]==[true] if NOT [%CPPDEBUG%]==[1] %PYTHON%\\Scripts\\twine upload --skip-existing dist\\*.whl"
