@@ -65,10 +65,10 @@ if USE_CYTHON:
 packages = ['neal']
 
 install_requires = ['dimod>=0.9.2',
-                    'numpy>=1.16.0,<2.0.0',
+                    'numpy>=1.16.0',
                     ]
 
-setup_requires = ['numpy>=1.14.0,<2.0.0']
+setup_requires = ['numpy>=1.16.0']
 
 classifiers = [
     'License :: OSI Approved :: Apache Software License',
@@ -76,7 +76,9 @@ classifiers = [
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7'
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
 ]
 
 python_requires = '>=3.5'
