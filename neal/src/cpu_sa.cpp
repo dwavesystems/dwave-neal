@@ -62,11 +62,10 @@ double get_flip_energy(
         // corresponding coupler weight
         energy += state[neighbors[var][n_i]] * neighbour_couplings[var][n_i];
     }
-    // we then multiply the entire energy by -2 * the state of `var` because
-    // if s is the state of `var`, s_j is the state of the jth neighbor, and
-    // w_j is the coupler weight between `var` and the jth neighbor, then
-    // delta energy = sum_{j in neighbors} -2*s*w_j*s_j = 
-    // -2*s*sum_{j in neighbors} w_j*s_j
+    // the value of the variable `energy` is now equal to the sum of the
+    // coefficients of `var`.  we then multiply this by -2 * the state of `var`
+    // because the energy delta is given by: (x_i_new - x_i_old) * sum(coefs),
+    // and (x_i_new - x_i_old) = -2 * x_i_old
     return -2 * state[var] * energy;
 }
 
@@ -139,7 +138,7 @@ void simulated_annealing_run(
                 else {
                     // get a random number, storing it in rand
                     FASTRAND(rand); 
-                    // accept the flip if exp(delta_energy*beta) > random(0, 1)
+                    // accept the flip if exp(-delta_energy*beta) > random(0, 1)
                     if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
                         flip_spin = true;
                     }
