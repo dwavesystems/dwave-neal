@@ -139,7 +139,7 @@ void simulated_annealing_run(
                 else {
                     // get a random number, storing it in rand
                     FASTRAND(rand); 
-                    // accept the flip if exp(delta_energy*beta) > random(0, 1)
+                    // accept the flip if exp(-delta_energy*beta) > random(0, 1)
                     if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
                         flip_spin = true;
                     }
