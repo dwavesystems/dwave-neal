@@ -154,7 +154,7 @@ jobs:
     steps:
       - checkout
 
-      - run: 
+      - run:
           name: install pyenv
           command: |
             brew install pyenv
@@ -222,7 +222,7 @@ jobs:
     steps:
       - checkout
 
-      - run: 
+      - run:
           name: install pyenv
           command: |
             brew install pyenv
@@ -242,7 +242,7 @@ jobs:
           key: pyenv-{{ .Environment.CIRCLE_JOB }}-xcode12.2.0
 
       - run: *osx-install-template
-      
+
       - run:
           name: create bdist_wheel
           command: |
@@ -283,6 +283,13 @@ jobs:
             . env/bin/activate
             cd docs/
             make html doctest
+
+      - run:
+          name: linkcheck
+          command: |
+            . env/bin/activate
+            cd docs/
+            make linkcheck
 
       - store_artifacts:
           path: ./docs/build/html

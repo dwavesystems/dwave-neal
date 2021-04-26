@@ -1,5 +1,5 @@
 .. image:: https://img.shields.io/pypi/v/dwave-neal.svg
-    :target: https://pypi.python.org/pypi/dwave-neal
+    :target: https://pypi.org/project/dwave-neal
 
 .. image:: https://codecov.io/gh/dwavesystems/dwave-neal/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/dwavesystems/dwave-neal
