@@ -1,6 +1,6 @@
 # sphinx requirement for py34
 colorama<=0.4.1; sys_platform == "win32"
 
-sphinx
+sphinx>=4.0.0,<5.0.0
 sphinx_rtd_theme
 recommonmark
