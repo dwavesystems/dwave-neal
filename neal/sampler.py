@@ -70,7 +70,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         initial_states_generator
         interrupt_function
         num_reads
-        num_sweeps
+        num_betas
+        num_sweeps_per_beta
         seed
         >>> sampler.parameters['beta_range']
         []
@@ -96,20 +97,29 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         # create a local copy in case folks for some reason want to modify them
         self.parameters = {'beta_range': [],
                            'num_reads': [],
-                           'num_sweeps': [],
+                           'num_betas': [],
+                           'num_sweeps_per_beta': [],
                            'beta_schedule_type': ['beta_schedule_options'],
                            'seed': [],
                            'interrupt_function': [],
                            'initial_states': [],
                            'initial_states_generator': [],
                            }
-        self.properties = {'beta_schedule_options': ('linear', 'geometric')
+        self.properties = {'beta_schedule_options': ('linear', 'geometric', 'custom')
                            }
 
-    def sample(self, bqm, beta_range=None, num_reads=None, num_sweeps=1000,
+    def sample(self, bqm, beta_range=None, num_reads=None, num_betas=1000, num_sweeps_per_beta=1,
                beta_schedule_type="geometric", seed=None, interrupt_function=None,
-               initial_states=None, initial_states_generator="random", **kwargs):
+               beta_schedule = [], initial_states=None, initial_states_generator="random",
+               **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
+        Each sweep applies a Metropolis update to every spin in a fixed order. This method obeys
+        detailed balance and is ergodic at finite beta, ensuring convergence in the limit of large 
+        num_sweeps_per_beta, or the limit of a smooth schedule (large num_betas), achieving fair sampling 
+        of the distribution P(s) = exp(-beta H(s)) where beta is the final term in the schedule. If final
+        beta is chosen large, then samples concentrate on the ground state(s) at equilibrium. This 
+        can be used as a heuristic to obtain a distribution over local and global minima, when run in a 
+        practical (out of equilibrium) mode on hard problems.
 
         Args:
             bqm (:class:`dimod.BinaryQuadraticModel`):
@@ -128,15 +138,27 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 selected to match the number of initial states given. If initial states
                 are not provided, only one read is performed.
 
-            num_sweeps (int, optional, default=1000):
-                Number of sweeps or steps.
+            num_betas (int, optional, default=1000):
+                Number of betas used in annealing. 
+
+            num_sweeps_per_beta (int, optional, default=1)
+                Number of sweeps to perform at each beta. 
 
             beta_schedule_type (string, optional, default='geometric'):
                 Beta schedule type, or how the beta values are interpolated between
                 the given 'beta_range'. Supported values are:
-
                 * linear
                 * geometric
+                * custom
+                If custom, all values except 'beta_schedule' and 'num_sweeps_per_beta' are 
+                ignored. Otherwise, 'beta_schedule' argument must be an empty array.
+                For high performance applications, it is necessary to consider optimization
+                of the schedules beyond 'linear' and 'geometric', and with bounds beyond
+                those provided by defaults. In these cases 'custom' should be considered.
+
+            beta_schedule (array-like, optional)
+                Sequence of beta values swept. Format compatible with 
+                numpy.array(beta_schedule,dtype=float) required. 
 
             seed (int, optional):
                 Seed to use for the PRNG. Specifying a particular seed with a constant
@@ -189,7 +211,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             >>> sampleset = sampler.sample(bqm)
             >>> # Run with specified parameters
             >>> sampleset = sampler.sample(bqm, seed=1234, beta_range=[0.1, 4.2],
-            ...                                num_reads=1, num_sweeps=20,
+            ...                                num_reads=1, num_betas=20,
             ...                                beta_schedule_type='geometric')
             >>> # Reuse a seed
             >>> a1 = next((sampler.sample(bqm, seed=88)).samples())['a']
@@ -238,21 +260,31 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
 
+        assert num_sweeps_per_beta >= 1, "'num_sweeps_per_beta' must be a positive whole value"
+        
         # handle beta_schedule et al
-        if beta_range is None:
-            beta_range = _default_ising_beta_range(bqm.linear, bqm.quadratic)
-
-        num_sweeps_per_beta = max(1, num_sweeps // 1000.0)
-        num_betas = int(math.ceil(num_sweeps / num_sweeps_per_beta))
-        if beta_schedule_type == "linear":
-            # interpolate a linear beta schedule
-            beta_schedule = np.linspace(*beta_range, num=num_betas)
-        elif beta_schedule_type == "geometric":
-            # interpolate a geometric beta schedule
-            beta_schedule = np.geomspace(*beta_range, num=num_betas)
+        if beta_schedule_type == "custom":
+            assert len(beta_schedule)>0, "'beta_schedule' must be provided for beta_schedule_type = 'custom'"
+            beta_schedule = np.array(beta_schedule,dtype=float)
         else:
-            raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
-
+            assert len(beta_schedule) == 0, "'beta_schedule' must be set to default (=[]) unless 'beta_schedule_type' is custom"
+            assert num_betas >= 1, "'num_betas' must be a positive value"
+            if beta_range == None:
+                beta_range = _default_ising_beta_range(bqm.linear, bqm.quadratic)
+            else:
+                assert len(beta_range) == 2 and beta_range[0] > 0 and beta_range[1] > beta_range[0], "'beta_range' should be increasing list 2 positive values"
+            if num_betas == 1:
+                #One sweep in the target model
+                beta_schedule = np.array([beta_range[-1]],dtype=float)
+            else:
+                if beta_schedule_type == "linear":
+                    # interpolate a linear beta schedule
+                    beta_schedule = np.linspace(*beta_range, num=num_betas)
+                elif beta_schedule_type == "geometric":
+                    # interpolate a geometric beta schedule
+                    beta_schedule = np.geomspace(*beta_range, num=num_betas)
+                else:
+                    raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
         # run the simulated annealing algorithm
         samples, energies = sa.simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
@@ -288,45 +320,71 @@ def _default_ising_beta_range(h, J):
 
     Assume each variable in J is also in h.
 
-    We use the minimum bias to give a lower bound on the minimum energy gap, such at the
-    final sweeps we are highly likely to settle into the current valley.
+    Generally one should optimize min_beta, max_beta and the shape of the schedule (linear, 
+    geometric) to maximize some objective such as time to solution. 
+    The approximations here are simplified, and can be far from optimal in some cases, use
+    custom schedules to address such cases. 
+    Approximations used are O(number of biases), O(1) approximations are also possible, but
+    methods are not bottlenecks in practice.
+    We use the maximum bias per spin to give an upper bound on the gap, allowing the initial 
+    sweeps to be fast mixing.
+    We use the minimum bias per spin to give a lower bound on the minimum energy gap, such 
+    that at the final sweeps we are highly unlikely to excite away from a global (or local)
+    minima.
     """
-    # Get nonzero, absolute biases
-    abs_h = [abs(hh) for hh in h.values() if hh != 0]
-    abs_J = [abs(jj) for jj in J.values() if jj != 0]
-    abs_biases = abs_h + abs_J
-
-    if not abs_biases:
-        return [0.1, 1.0]
-
-    # Rough approximation of min change in energy when flipping a qubit
-    min_delta_energy = min(abs_biases)
-
     # Combine absolute biases by variable
-    abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
+    sum_abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
+    min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
     for (k1, k2), v in J.items():
-        abs_bias_dict[k1] += abs(v)
-        abs_bias_dict[k2] += abs(v)
-
-    # Find max change in energy when flipping a single qubit
-    max_delta_energy = max(abs_bias_dict.values())
-
+        sum_abs_bias_dict[k1] += abs(v)
+        sum_abs_bias_dict[k2] += abs(v)
+        if v != 0: #This is slow, but this routine is not a bottleneck:
+            for k in [k1,k2]:
+                if k in min_abs_bias_dict:
+                    min_abs_bias_dict[k] = min(abs(v),min_abs_bias_dict[k])
+                else:
+                    min_abs_bias_dict[k] = abs(v)
+                
     # Selecting betas based on probability of flipping a qubit
-    # Hot temp: We want to scale hot_beta so that for the most unlikely qubit flip, we get at least
-    # 50% chance of flipping.(This means all other qubits will have > 50% chance of flipping
-    # initially.) Most unlikely flip is when we go from a very low energy state to a high energy
-    # state, thus we calculate hot_beta based on max_delta_energy.
-    #   0.50 = exp(-hot_beta * max_delta_energy)
-    #
-    # Cold temp: Towards the end of the annealing schedule, we want to minimize the chance of
-    # flipping. Don't want to be stuck between small energy tweaks. Hence, set cold_beta so that
-    # at minimum energy change, the chance of flipping is set to 1%.
-    #   0.01 = exp(-cold_beta * min_delta_energy)
-    hot_beta = np.log(2) / max_delta_energy
-    cold_beta = np.log(100) / min_delta_energy
-
+    # Hot temp: We want to be able to quickly search the entire solution space (equilibrate).
+    # Scale hot_beta so that all spins are able to flip with probability at least 50%, which
+    # ensures mixing across all states is fast.
+    # The most unlikely flip is related to the largest energy gap that must be overcome, with
+    # Metropolis updates we require:
+    #   0.50 = exp(-hot_beta * max_delta_energy) - (1)
+    # Max delta energy occurs when all biases are aligned, and contribute without frustration:
+    max_delta_field = max(sum_abs_bias_dict.values())
+    if max_delta_field == 0:
+        hot_beta = 1
+    else:
+        hot_beta = np.log(2) / (2*max_delta_field)
+    
+    # Cold temp: Towards the end of the annealing schedule, we want to eliminate excitations assuming
+    # an optimization application; the samples relax to a local (or ideally global) minima.
+    # If we arrive at the ground state (or local minima) on the penultimate iteration, we can require
+    # that we have low probability to excite on the final iteration.
+    # This means that the probability to excite any spin must be bounded by 0.01 on the final sweep
+    #   0.01 = sum_i exp(-cold_beta * min_delta_energy_i) - (2)
+    # We can approximate min_delta_energy_i as the cost of frustrating the smallest J or h. This approximation
+    # can be tight for low precision problems, but can be improved for higher precision ones. In the worst
+    # case (high connectity and high precision) determining min_delta_energy_i is NP-hard (related to a
+    # knapsack problem) we settle for this approximation, which yields satisfactory results in many standard
+    # model types.
+    # (2) is a convex optimization problem, and easy to solve with a root finder. However, for brevity we can
+    # further simplify, by assuming only spins experiencing minimal gaps are excitable
+    #   0.01 ~ #minimal_gaps exp(- cold_beta min_i min_delta_energy_i) - (2)
+    # Where #minimal_gaps counts the number of cases i for which min_delta_energy_i = min_i(min_delta_energy_i)
+    # The solution is cold_beta = log(100*#minimal_gaps) / min_delta_energy. 
+    if len(min_abs_bias_dict)==0:
+        #Trivial problem
+        cold_beta = hot_beta
+    else:
+        values_array = np.array(list(min_abs_bias_dict.values()),dtype=float)
+        min_delta_field = np.min(values_array)
+        number_min_gaps = np.sum(min_delta_field == values_array)
+        cold_beta = np.log(100.0*number_min_gaps) / (2*min_delta_field)
+    
     return [hot_beta, cold_beta]
-
 
 def default_beta_range(bqm):
     ising = bqm.spin
