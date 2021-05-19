@@ -113,13 +113,6 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                beta_schedule = [], initial_states=None, initial_states_generator="random",
                **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
-        Each sweep applies a Metropolis update to every spin in a fixed order. This method obeys
-        detailed balance and is ergodic at finite beta, ensuring convergence in the limit of large 
-        num_sweeps_per_beta, or the limit of a smooth schedule (large num_betas), achieving fair sampling 
-        of the distribution P(s) = exp(-beta H(s)) where beta is the final term in the schedule. If final
-        beta is chosen large, then samples concentrate on the ground state(s) at equilibrium. This 
-        can be used as a heuristic to obtain a distribution over local and global minima, when run in a 
-        practical (out of equilibrium) mode on hard problems.
 
         Args:
             bqm (:class:`dimod.BinaryQuadraticModel`):
@@ -272,7 +265,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             if beta_range == None:
                 beta_range = _default_ising_beta_range(bqm.linear, bqm.quadratic)
             else:
-                assert len(beta_range) == 2 and beta_range[0] > 0 and beta_range[1] > beta_range[0], "'beta_range' should be increasing list 2 positive values"
+                assert len(beta_range) == 2 and beta_range[0] >= 0 and beta_range[1] >= beta_range[0], "'beta_range' should be increasing list 2 positive values"
+                
             if num_betas == 1:
                 #One sweep in the target model
                 beta_schedule = np.array([beta_range[-1]],dtype=float)
@@ -281,6 +275,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     # interpolate a linear beta schedule
                     beta_schedule = np.linspace(*beta_range, num=num_betas)
                 elif beta_schedule_type == "geometric":
+                    assert beta_range[0]>0, "Geometric schedule does not allow uniform random (beta=0) value for the initial model (beta_range[0]), consider using default"
                     # interpolate a geometric beta schedule
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
@@ -324,22 +319,23 @@ def _default_ising_beta_range(h, J):
     geometric) to maximize some objective such as time to solution. 
     The approximations here are simplified, and can be far from optimal in some cases, use
     custom schedules to address such cases. 
-    Approximations used are O(number of biases), O(1) approximations are also possible, but
-    methods are not bottlenecks in practice.
+    Approximations used are of complexity O(number of biases), O(1) approximations are also 
+    possible, as are stronger approximations, but methods are not bottlenecks in practice.
     We use the maximum bias per spin to give an upper bound on the gap, allowing the initial 
     sweeps to be fast mixing.
-    We use the minimum bias per spin to give a lower bound on the minimum energy gap, such 
-    that at the final sweeps we are highly unlikely to excite away from a global (or local)
-    minima.
+    We use an approximation to the minimum bias per spin to give a lower bound on the minimum 
+    energy gap, such that at the final sweeps we are highly unlikely to excite away from a 
+    global (or local) minima.
     """
-    # Combine absolute biases by variable
+    # Approximate worst and best cases of the [non-zero] energy signal (effective field)
+    # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
     sum_abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
     min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
+    #This loop is slow, but is not a bottleneck for practical implementations of simulated annealing:
     for (k1, k2), v in J.items():
-        sum_abs_bias_dict[k1] += abs(v)
-        sum_abs_bias_dict[k2] += abs(v)
-        if v != 0: #This is slow, but this routine is not a bottleneck:
-            for k in [k1,k2]:
+        for k in [k1,k2]:
+            sum_abs_bias_dict[k] += abs(v)
+            if v != 0: #This is slow, but this routine is not a bottleneck:
                 if k in min_abs_bias_dict:
                     min_abs_bias_dict[k] = min(abs(v),min_abs_bias_dict[k])
                 else:
@@ -352,12 +348,14 @@ def _default_ising_beta_range(h, J):
     # The most unlikely flip is related to the largest energy gap that must be overcome, with
     # Metropolis updates we require:
     #   0.50 = exp(-hot_beta * max_delta_energy) - (1)
+    # This is solved as hot_beta = log(2)/max_delta_energy, max_delta energy is twice the
+    # effective field, we take a worst case of the effective field to be conservative.
     # Max delta energy occurs when all biases are aligned, and contribute without frustration:
-    max_delta_field = max(sum_abs_bias_dict.values())
-    if max_delta_field == 0:
+    max_effective_field = max(sum_abs_bias_dict.values())
+    if max_effective_field == 0:
         hot_beta = 1
     else:
-        hot_beta = np.log(2) / (2*max_delta_field)
+        hot_beta = np.log(2) / (2*max_effective_field)
     
     # Cold temp: Towards the end of the annealing schedule, we want to eliminate excitations assuming
     # an optimization application; the samples relax to a local (or ideally global) minima.
@@ -374,15 +372,18 @@ def _default_ising_beta_range(h, J):
     # further simplify, by assuming only spins experiencing minimal gaps are excitable
     #   0.01 ~ #minimal_gaps exp(- cold_beta min_i min_delta_energy_i) - (2)
     # Where #minimal_gaps counts the number of cases i for which min_delta_energy_i = min_i(min_delta_energy_i)
-    # The solution is cold_beta = log(100*#minimal_gaps) / min_delta_energy. 
+    # i.e. the number of spins which are most easily excited out of the ground state.
+    # The solution is cold_beta = log(100*#minimal_gaps) / min_delta_energy.
+    # min_delta_energy is twice the smallest (non-zero) effective field, we approximate this per spin as the
+    # smallest associated bias term (h or J).
     if len(min_abs_bias_dict)==0:
         #Trivial problem
         cold_beta = hot_beta
     else:
         values_array = np.array(list(min_abs_bias_dict.values()),dtype=float)
-        min_delta_field = np.min(values_array)
-        number_min_gaps = np.sum(min_delta_field == values_array)
-        cold_beta = np.log(100.0*number_min_gaps) / (2*min_delta_field)
+        min_effective_field = np.min(values_array)
+        number_min_gaps = np.sum(min_effective_field == values_array)
+        cold_beta = np.log(100.0*number_min_gaps) / (2*min_effective_field)
     
     return [hot_beta, cold_beta]
 
