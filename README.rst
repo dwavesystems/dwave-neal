@@ -16,9 +16,18 @@ dwave-neal
 .. index-start-marker
 
 An implementation of a simulated annealing sampler.
-A simulated annealing sampler can be used for approximate Boltzmann sampling, or heuristic optimization. In this implementation the equilibrium distribution at a target inverse temperature (beta) is approached by performing updates at a sequence of increasing beta values (the beta_schedule), terminating at the target beta. In this implementation each spin is updated once in a fixed order per point in the beta_schedule according to a Metropolis-Hastings update. When beta is large the target distribution concentrates, at equilibrium, over ground states of the model. Samples are guaranteed to match the equilibrium for long 'smooth' beta_schedules, in practical operation the sampler can be used as a heuristic for equilibrium sampling, and optimization.
 
-Kirkpatrick, S.; Gelatt Jr, C. D.; Vecchi, M. P. (1983). "Optimization by Simulated Annealing". Science. 220 (4598): 671–680
+A simulated annealing sampler can be used for approximate Boltzmann sampling or
+heuristic optimization. This implementation approaches the equilibrium
+distribution by performing updates at a sequence of increasing beta values,
+``beta_schedule``, terminating at the target beta. Each spin is updated once
+in a fixed order per point in the beta_schedule according to a Metropolis-
+Hastings update. When beta is large the target distribution concentrates, at
+equilibrium, over ground states of the model. Samples are guaranteed to match
+the equilibrium for long 'smooth' beta schedules.
+
+For more information, see Kirkpatrick, S.; Gelatt Jr, C. D.; Vecchi, M. P.
+(1983). "Optimization by Simulated Annealing". Science. 220 (4598): 671–680
 
 Example Usage
 -------------
