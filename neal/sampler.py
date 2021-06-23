@@ -20,7 +20,7 @@ A dimod :term:`sampler` that uses the simulated annealing algorithm.
 import math
 
 from numbers import Integral
-from random import randint
+from numpy.random import randint
 from collections import defaultdict
 
 import dimod
@@ -90,7 +90,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         >>> import neal
         >>> sampler = neal.SimulatedAnnealingSampler()
         >>> sampler.properties['beta_schedule_options']
-        ('linear', 'geometric')
+        ('linear', 'geometric', 'custom')
 
     """
 
@@ -121,9 +121,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             bqm (:class:`dimod.BinaryQuadraticModel`):
                 The binary quadratic model to be sampled.
 
-            beta_range (tuple, optional, default = None):
-                A 2-tuple defining the beginning and end of the beta schedule,
-                where beta is the inverse temperature. The schedule is
+            beta_range (tuple or list, optional, default = None):
+                A 2-tuple or list defining the beginning and end of the beta 
+                schedule, where beta is the inverse temperature. The schedule is
                 interpolated within this range according to the value specified
                 by ``beta_schedule_type``. Default range is set based on the 
                 total bias associated with each node.
@@ -146,8 +146,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             beta_schedule_type (string, optional, default="geometric"):
                 Beta schedule type, or how the beta values are interpolated 
                 between the given `beta_range`. Supported values are:
+
                 * "linear"
+
                 * "geometric"
+
                 * "custom"
 
                 "custom" is recommended for high-performance applications, which
@@ -158,7 +161,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
             beta_schedule (array-like, optional, default = None)
                 Sequence of beta values swept. Format compatible with 
-                numpy.array(beta_schedule,dtype=float) required. 
+                numpy.array(beta_schedule,dtype=float) required. Values should
+                be non-negative.
 
             seed (int, optional, default = None):
                 Seed to use for the PRNG. Specifying a particular seed with a 
@@ -213,9 +217,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             >>> sampleset = sampler.sample(bqm)
             >>> # Run with specified parameters
             >>> sampleset = sampler.sample(bqm, seed=1234, 
-            ...                                beta_range=[0.1, 4.2],
-            ...                                num_reads=1, num_sweeps=20,
-            ...                                beta_schedule_type='geometric')
+            ...                            beta_range=[0.1, 4.2],
+            ...                            num_sweeps=20,
+            ...                            beta_schedule_type='geometric')
             >>> # Reuse a seed
             >>> a1 = next((sampler.sample(bqm, seed=88)).samples())['a']
             >>> a2 = next((sampler.sample(bqm, seed=88)).samples())['a']
@@ -264,8 +268,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
 
-        if num_sweeps_per_beta < 1:
-            error_msg = "'num_sweeps_per_beta' must be a positive whole value: value = " + str(num_sweeps_per_beta)
+        if not isinstance(num_sweeps_per_beta, Integral):
+            error_msg = "'num_sweeps_per_beta' should be a positive integer: value =" + str(num_sweeps_per_beta)
+            raise TypeError(error_msg)
+        elif num_sweeps_per_beta < 1:
+            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = " + str(num_sweeps_per_beta)
             raise ValueError(error_msg)
         
         # handle beta_schedule et al
@@ -274,31 +281,32 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             if beta_schedule is None:
                 error_msg = "'beta_schedule' must be provided for beta_schedule_type = 'custom': value is None"
                 raise ValueError(error_msg)
-            
-            if num_sweeps is not None and num_sweeps!=len(beta_schedule)*num_sweeps_per_beta:
+            elif num_sweeps is not None and num_sweeps!=len(beta_schedule)*num_sweeps_per_beta:
                 error_msg = "'num_sweeps' should be set to None, or a value consistent with 'beta_schedule' and 'num_sweeps_per_beta' for 'beta_schedule_type' = 'custom': value = " + str(num_sweeps)
                 raise ValueError(error_msg)
-
-            if beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]==beta_schedule[-1]):
-                error_msg = "'beta_range' should be set to None, or a value consistent for 'beta_schedule_type' = 'custom': values is " + str(beta_range)
+            elif beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]!=beta_schedule[-1]):
+                error_msg = "'beta_range' should be set to None, or a value consistent with 'beta_schedule', for 'beta_schedule_type'='custom'."
+                raise ValueError(error_msg)
+            elif min(beta_schedule)<0:
+                error_msg = "'beta_schedule' cannot include negative values."
                 raise ValueError(error_msg)
         else:
             if beta_schedule is not None:
                 error_msg = "'beta_schedule' must be set to None for 'beta_schedule_type' not equal to 'custom'"
                 raise ValueError(error_msg)
-            
-            if num_sweeps is None:
+            elif num_sweeps is None:
                 num_sweeps = 1000
+                
             num_betas, rem = divmod(num_sweeps,num_sweeps_per_beta)
             
             if rem > 0 or num_betas < 1:
-                error_msg = "'num_sweeps' must be a positive value divisible by num_sweeps_per_beta"
+                error_msg = "'num_sweeps' must be a positive value divisible by 'num_sweeps_per_beta'."
                 raise ValueError(error_msg)
             
             if beta_range is None:
                 beta_range = _default_ising_beta_range(bqm.linear, bqm.quadratic)
-            elif len(beta_range) != 2 or beta_range[0] <= 0 or beta_range[1]<= 0:
-                error_msg = "'beta_range' should be a 2-tuple, or 2 element list. The later value is the target value"
+            elif len(beta_range) != 2 or min(beta_range) < 0:
+                error_msg = "'beta_range' should be a 2-tuple, or 2 element list of positive numbers. The latter value is the target value."
                 raise ValueError(error_msg)
             
             if num_betas == 1:
@@ -309,7 +317,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     # interpolate a linear beta schedule
                     beta_schedule = np.linspace(*beta_range, num=num_betas)
                 elif beta_schedule_type == "geometric":
-                    assert beta_range[0]>0, "Geometric schedule does not allow uniform random (beta=0) value for the initial model (beta_range[0]), consider using default"
+                    if min(beta_range) <= 0:
+                        error_msg = "'beta_range' must contain non-zero values for 'beta_schedule_type' = 'geometric'"
+                        raise ValueError(error_msg)
                     # interpolate a geometric beta schedule
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
@@ -351,15 +361,15 @@ def _default_ising_beta_range(h, J):
 
     Generally one should optimize min_beta, max_beta and the shape of the schedule (linear, 
     geometric) to maximize some objective such as time to solution. 
-    The approximations here are simplified, and can be far from optimal in some cases, use
+    The approximations here are simplified, and can be far from optimal in some cases. Use
     custom schedules to address such cases. 
     Approximations used are of complexity O(number of biases), O(1) approximations are also 
     possible, as are stronger approximations, but methods are not bottlenecks in practice.
     We use the maximum bias per spin to give an upper bound on the gap, allowing the initial 
     sweeps to be fast mixing.
     We use an approximation to the minimum bias per spin to give a lower bound on the minimum 
-    energy gap, such that at the final sweeps we are highly unlikely to excite away from a 
-    global (or local) minima.
+    energy gap, such that for the final sweeps states are highly unlikely to excite away from 
+    a global (or local) minimum.
     """
     # Approximate worst and best cases of the [non-zero] energy signal (effective field)
     # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
