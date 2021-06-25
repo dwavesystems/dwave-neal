@@ -300,7 +300,9 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
 class TestDefaultBetaRange(unittest.TestCase):
     def test_empty_problem(self):
-        self.assertEqual(neal.sampler._default_ising_beta_range({}, {}), [.1, 1.0])
+        #Values have no impact on behaviour, but should conform to documented structure
+        beta_range = neal.sampler._default_ising_beta_range({}, {})
+        self.assertTrue(len(beta_range)==2 and min(beta_range)>= 0)
 
     def test_single_variable_ising_problem(self):
         h1, c1 = neal.sampler._default_ising_beta_range({'a': 0.1}, {})
@@ -315,7 +317,6 @@ class TestDefaultBetaRange(unittest.TestCase):
         h1, c1 = neal.sampler._default_ising_beta_range({}, {'ab': 0.1})
         h2, c2 = neal.sampler._default_ising_beta_range({}, {'ab': 1})
         h3, c3 = neal.sampler._default_ising_beta_range({}, {'ab': 10})
-
         self.assertTrue(h1 > h2 > h3)
         self.assertTrue(c1 > c2 > c3)
         self.assertTrue(h1 < c1 and h2 < c2 and h3 < c3)

@@ -28,6 +28,7 @@ import numpy as np
 
 import neal.simulated_annealing as sa
 
+import warnings
 
 __all__ = ["Neal", "SimulatedAnnealingSampler", "default_beta_range"]
 
@@ -375,6 +376,7 @@ def _default_ising_beta_range(h, J):
     # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
     sum_abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
     min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
+    
     #This loop is slow, but is not a bottleneck for practical implementations of simulated annealing:
     for (k1, k2), v in J.items():
         for k in [k1,k2]:
@@ -384,7 +386,19 @@ def _default_ising_beta_range(h, J):
                     min_abs_bias_dict[k] = min(abs(v),min_abs_bias_dict[k])
                 else:
                     min_abs_bias_dict[k] = abs(v)
-                
+
+    if not min_abs_bias_dict:
+        #If dictionary is empty, a Null problem is being presented. This is
+        #likely a user error, or edge case test.
+        #We should also consider warning for min(min_abs_bias_dict.values())==0.
+        #Metropolis-Hastings is not suitable for unbiased and uncoupled
+        #variables, sampling of equilibrium is possible, but only if a uniform
+        #random initial condition is used (this is default, but allows changes).
+        warn_msg = 'All bqm biases are zero (all energies are zero), this is likely a value error. Temperature range is set arbitrarily to [0.1,1]. Metropolis-Hastings update is non-ergodic.'
+        warnings.warn(warn_msg)
+        return([0.1,1])
+        
+                    
     # Selecting betas based on probability of flipping a qubit
     # Hot temp: We want to be able to quickly search the entire solution space (equilibrate).
     # Scale hot_beta so that all spins are able to flip with probability at least 50%, which
