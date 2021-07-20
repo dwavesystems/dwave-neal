@@ -105,8 +105,8 @@ jobs:
             python -m virtualenv env
             . env/bin/activate
             pip install -r tests/requirements.txt
-            pip install numpy'<< parameters.numpy-version >>' --upgrade
             pip install dimod'<< parameters.dimod-version >>' --upgrade
+            pip install numpy'<< parameters.numpy-version >>' --upgrade
             pip install dwave-neal --no-index -f dist/ --no-deps --force-reinstall
 
       - run:
