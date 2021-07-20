@@ -233,8 +233,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         # read out the BQM
         ldata, (irow, icol, qdata), off = bqm.to_numpy_vectors(
-            variable_order=variable_order,
-            dtype=np.double, index_dtype=np.intc)
+            variable_order=variable_order)
 
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
