@@ -6,8 +6,6 @@ environment:
     secure: 9/YAQhmz9Kb1ZeXzhBYeQA==
 
   matrix:
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python37"

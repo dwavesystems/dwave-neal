@@ -82,7 +82,7 @@ jobs:
 
   test-linux:
     parameters:
-      image:
+      python-version:
         type: string
       numpy-version:
         type: string
@@ -90,7 +90,7 @@ jobs:
         type: string
 
     docker:
-      - image: circleci/python:<< parameters.image >>
+      - image: circleci/python:<< parameters.python-version >>
 
     steps:
       - checkout
@@ -105,8 +105,8 @@ jobs:
             python -m virtualenv env
             . env/bin/activate
             pip install -r tests/requirements.txt
-            pip install numpy'<< parameters.numpy-version >>' --upgrade
             pip install dimod'<< parameters.dimod-version >>' --upgrade
+            pip install numpy'<< parameters.numpy-version >>' --upgrade
             pip install dwave-neal --no-index -f dist/ --no-deps --force-reinstall
 
       - run:
@@ -301,14 +301,14 @@ workflows:
           name: build-manylinux1_<< matrix.architecture >>-py3<< matrix.python-minor >>
           matrix:
             parameters:
-              python-minor: [5, 6, 7, 8, 9]
+              python-minor: [6, 7, 8, 9]
               # We could build for 32bit as well, but since we don't have any
               # way to test it and it slows down compilation, we don't for
               # now.
               architecture: ["x86_64"]
       - build-sdist
       - test-linux:
-          name: test-linux-<< matrix.image >>-dimod<< matrix.dimod-version >>-numpy<< matrix.numpy-version >>
+          name: test-linux-<< matrix.python-version >>-dimod<< matrix.dimod-version >>-numpy<< matrix.numpy-version >>
           # We could break each of these out into seperate jobs so that we
           # don't need to wait for the entire above matrix to complete, but
           # this is cleaner
@@ -316,36 +316,31 @@ workflows:
             - build-manylinux
           matrix:
             parameters:
-              numpy-version: ['==1.16.0', '']
-              dimod-version: ['==0.9.2', '']
-              image:
-                - 3.9-buster
-                - 3.8-buster
-                - 3.7-stretch
-                - 3.6-jessie
-                - 3.5-jessie
+              numpy-version: [<1.19, <1.20, <1.21, <1.22]
+              dimod-version: [==0.9.2, <0.11]
+              python-version: &python-versions [3.6.8, 3.7.9, 3.8.9, 3.9.4]
             exclude:
-              # numpy 1.16 does not support python 3.8+
               # dimod 0.9.2 does not support python 3.9+
-              - numpy-version: '==1.16.0'
-                dimod-version: ''
-                image: 3.9-buster
-              - numpy-version: '==1.16.0'
-                dimod-version: ''
-                image: 3.8-buster
-              - numpy-version: '==1.16.0'
-                dimod-version: '==0.9.2'
-                image: 3.9-buster
-              - numpy-version: '==1.16.0'
-                dimod-version: '==0.9.2'
-                image: 3.8-buster
-              - numpy-version: ''
-                dimod-version: '==0.9.2'
-                image: 3.9-buster
+              - numpy-version: <1.19
+                dimod-version: ==0.9.2
+                python-version: 3.9.4
+              - numpy-version: <1.20
+                dimod-version: ==0.9.2
+                python-version: 3.9.4
+              - numpy-version: <1.21
+                dimod-version: ==0.9.2
+                python-version: 3.9.4
+              - numpy-version: <1.22
+                dimod-version: ==0.9.2
+                python-version: 3.9.4
+              # latest numpy (1.21.1) has a bug, remove this once 1.21.2 is released
+              - numpy-version: <1.22
+                dimod-version: <0.11
+                python-version: 3.7.9
       - test-osx:
           matrix:
             parameters:
-              python-version: ["3.5.4", "3.6.8", "3.7.5", "3.8.6", "3.9.0"]
+              python-version: *python-versions
       - test-doctest
 
   deploy:
@@ -359,7 +354,7 @@ workflows:
           name: build-manylinux1_<< matrix.architecture >>-py3<< matrix.python-minor >>
           matrix:
             parameters:
-              python-minor: [5, 6, 7, 8, 9]
+              python-minor: [6, 7, 8, 9]
               architecture: ["x86_64", "i686"]
       - build-sdist:
           filters:
@@ -384,4 +379,4 @@ workflows:
               ignore: /.*/
           matrix:
             parameters:
-              python-version: ["3.5.4", "3.6.8", "3.7.5", "3.8.6", "3.9.0"]
+              python-version: *python-versions
