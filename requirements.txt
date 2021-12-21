@@ -1,3 +1,5 @@
-numpy==1.19.4; python_version >= '3.6'
-cython==0.29.21
-dimod==0.9.11
+numpy==1.19.1;python_version<"3.10"
+numpy==1.21.4;python_version>="3.10"
+cython==0.29.24
+dimod==0.9.11;python_version<"3.10"
+dimod==0.10.10;python_version>="3.10"
