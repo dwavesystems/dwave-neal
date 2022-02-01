@@ -238,12 +238,12 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         # parse_initial_states could handle seed generation, but because we're
         # sharing it with the SA algo, we handle it out here
         if seed is None:
-            seed = randint(2**32)
+            seed = randint(2**31)
         elif not isinstance(seed, Integral):
             error_msg = ("'seed' should be None or an integer between 0 and 2^32 "
                          "- 1: value = {}".format(seed))
             raise TypeError(error_msg)
-        elif not (0 <= seed < 2**32):
+        elif not (0 <= seed < 2**31):
             error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
                          "value = {}".format(seed))
             raise ValueError(error_msg)
