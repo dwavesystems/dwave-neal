@@ -377,7 +377,7 @@ def _default_ising_beta_range(h, J,
         J (dict):
             Couplings of Ising model (also called quadratic biases)
 
-        max_single_qubit_excitation_rate (bool, optional, default = 0.01)
+        max_single_qubit_excitation_rate (float, optional, default = 0.01):
             Targetted single qubit excitation rate at final temperature.
             We can set this value small to lower the probability of 
             excitations at the end of the anneal, combined with a simple 
@@ -478,7 +478,7 @@ def _default_ising_beta_range(h, J,
     #   0.01 ~ #minimal_gaps exp(- cold_beta min_i min_delta_energy_i) - (2)
     # Where #minimal_gaps counts the number of cases i for which min_delta_energy_i = min_i(min_delta_energy_i)
     # i.e. the number of spins which are most easily excited out of the ground state.
-    # The solution is cold_beta = log(100*#minimal_gaps) / min_delta_energy.
+    # The solution is cold_beta = log(#minimal_gaps/0.01) / min_delta_energy.
     # min_delta_energy is twice the smallest (non-zero) effective field, we approximate this per spin as the
     # smallest associated bias term (h or J).
     if len(min_abs_bias_dict)==0:
