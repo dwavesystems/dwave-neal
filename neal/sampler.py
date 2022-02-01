@@ -122,7 +122,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             bqm (:class:`dimod.BinaryQuadraticModel`):
                 The binary quadratic model to be sampled.
 
-            beta_range (tuple or list, optional, default = None):
+            beta_range (tuple or list, optional):
                 A 2-tuple or list defining the beginning and end of the beta 
                 schedule, where beta is the inverse temperature. The schedule is
                 interpolated within this range according to the value specified
@@ -146,7 +146,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
             beta_schedule_type (string, optional, default="geometric"):
                 Beta schedule type, or how the beta values are interpolated 
-                between the given `beta_range`. Supported values are:
+                between the given ``beta_range``. Supported values are:
 
                 * "linear"
 
@@ -240,10 +240,12 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if seed is None:
             seed = randint(2**32)
         elif not isinstance(seed, Integral):
-            error_msg = "'seed' should be None or an integer between 0 and 2^32 - 1: value =" + str(seed)
+            error_msg = ("'seed' should be None or an integer between 0 and 2^32 "
+                         "- 1: value = {}".format(seed))
             raise TypeError(error_msg)
         elif not (0 <= seed < 2**32):
-            error_msg = "'seed' should be an integer between 0 and 2^32 - 1: value =" + str(seed)
+            error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
+                         "value = {}".format(seed))
             raise ValueError(error_msg)
 
         # parse the inputs
@@ -270,27 +272,33 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             raise TypeError("'interrupt_function' should be a callable")
 
         if not isinstance(num_sweeps_per_beta, Integral):
-            error_msg = "'num_sweeps_per_beta' should be a positive integer: value =" + str(num_sweeps_per_beta)
+            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise TypeError(error_msg)
         elif num_sweeps_per_beta < 1:
-            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = " + str(num_sweeps_per_beta)
+            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise ValueError(error_msg)
         
         # handle beta_schedule et al
         if beta_schedule_type == "custom":
             
+            
             if beta_schedule is None:
                 error_msg = "'beta_schedule' must be provided for beta_schedule_type = 'custom': value is None"
                 raise ValueError(error_msg)
-            elif num_sweeps is not None and num_sweeps!=len(beta_schedule)*num_sweeps_per_beta:
-                error_msg = "'num_sweeps' should be set to None, or a value consistent with 'beta_schedule' and 'num_sweeps_per_beta' for 'beta_schedule_type' = 'custom': value = " + str(num_sweeps)
-                raise ValueError(error_msg)
-            elif beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]!=beta_schedule[-1]):
-                error_msg = "'beta_range' should be set to None, or a value consistent with 'beta_schedule', for 'beta_schedule_type'='custom'."
-                raise ValueError(error_msg)
-            elif min(beta_schedule)<0:
-                error_msg = "'beta_schedule' cannot include negative values."
-                raise ValueError(error_msg)
+            else:
+                try:
+                    beta_schedule = np.array(beta_schedule,dtype=float)
+                except:
+                    raise ValueError('beta_schedule cannot be case as a numpy array of dtype=float') 
+                if num_sweeps is not None and num_sweeps!=len(beta_schedule)*num_sweeps_per_beta:
+                    error_msg = "'num_sweeps' should be set to None, or a value consistent with 'beta_schedule' and 'num_sweeps_per_beta' for 'beta_schedule_type' = 'custom': value = ".format(num_sweeps)
+                    raise ValueError(error_msg)
+                elif beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]!=beta_schedule[-1]):
+                    error_msg = "'beta_range' should be set to None, or a value consistent with 'beta_schedule', for 'beta_schedule_type'='custom'."
+                    raise ValueError(error_msg)
+                elif np.min(beta_schedule)<0:
+                    error_msg = "'beta_schedule' cannot include negative values."
+                    raise ValueError(error_msg)
         else:
             if beta_schedule is not None:
                 error_msg = "'beta_schedule' must be set to None for 'beta_schedule_type' not equal to 'custom'"
@@ -350,18 +358,45 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 Neal = SimulatedAnnealingSampler
 
 
-def _default_ising_beta_range(h, J):
-    """Determine the starting and ending beta from h J
+def _default_ising_beta_range(h, J,
+                              max_single_qubit_excitation_rate = 0.01,
+                              scale_T_with_N = True):
+    """Determine the starting and ending beta from h J.
+
+    The assumed usage of annealing is optimization. Defaults are chosen
+    so that at the hot temperature is fast mixing, and so that at low
+    temperature the rate of excitations is small, exploiting a simple
+    approximation to the ground state energy space to determine a low
+    temperature bound and a worst case approximation to energy 
+    distribution to determine the high temperature bound.
 
     Args:
-        h (dict)
+        h (dict):
+            External field of Ising model (also called linear bias)
 
-        J (dict)
+        J (dict):
+            Couplings of Ising model (also called quadratic biases)
 
+        max_single_qubit_excitation_rate (bool, optional, default = 0.01)
+            Targetted single qubit excitation rate at final temperature.
+            We can set this value small to lower the probability of 
+            excitations at the end of the anneal, combined with a simple 
+            approximation to the ground-state energy structure. 
+            For standard schedule types (such as geometric), a trade-off 
+            exists between this threshold and time to solution
+            (exploiting multiple restarts).
+    
+        scale_T_with_N (bool, optional, default = False):
+            The expected number of excitations at finite temperature scales
+            with the number of variables. For non-vanishing probability
+            of the ground state it is necessary for T to scale to zero
+            with N. A simplified approximation to the ground-state energy
+            structure is used - for high precision problems T may not scale.
+            
     Assume each variable in J is also in h.
 
-    Generally one should optimize min_beta, max_beta and the shape of the schedule (linear, 
-    geometric) to maximize some objective such as time to solution. 
+    Generally one should optimize min_beta, max_beta and the shape of the schedule
+    to maximize some objective such as time to solution. 
     The approximations here are simplified, and can be far from optimal in some cases. Use
     custom schedules to address such cases. 
     Approximations used are of complexity O(number of biases), O(1) approximations are also 
@@ -372,11 +407,17 @@ def _default_ising_beta_range(h, J):
     energy gap, such that for the final sweeps states are highly unlikely to excite away from 
     a global (or local) minimum.
     """
+    if not (max_single_qubit_excitation_rate>0 and max_single_qubit_excitation_rate<1):
+        raise ValueError('Targetted single qubit excitations rates must be in range (0,1)')
+    
+    
     # Approximate worst and best cases of the [non-zero] energy signal (effective field)
     # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
     sum_abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
-    min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
-    
+    if sum_abs_bias_dict:
+        min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
+    else:
+        min_abs_bias_dict = {}
     #This loop is slow, but is not a bottleneck for practical implementations of simulated annealing:
     for (k1, k2), v in J.items():
         for k in [k1,k2]:
@@ -394,7 +435,9 @@ def _default_ising_beta_range(h, J):
         #Metropolis-Hastings is not suitable for unbiased and uncoupled
         #variables, sampling of equilibrium is possible, but only if a uniform
         #random initial condition is used (this is default, but allows changes).
-        warn_msg = 'All bqm biases are zero (all energies are zero), this is likely a value error. Temperature range is set arbitrarily to [0.1,1]. Metropolis-Hastings update is non-ergodic.'
+        warn_msg = ('All bqm biases are zero (all energies are zero), this is '
+                    'likely a value error. Temperature range is set arbitrarily '
+                    'to [0.1,1]. Metropolis-Hastings update is non-ergodic.')
         warnings.warn(warn_msg)
         return([0.1,1])
         
@@ -409,7 +452,11 @@ def _default_ising_beta_range(h, J):
     # This is solved as hot_beta = log(2)/max_delta_energy, max_delta energy is twice the
     # effective field, we take a worst case of the effective field to be conservative.
     # Max delta energy occurs when all biases are aligned, and contribute without frustration:
-    max_effective_field = max(sum_abs_bias_dict.values())
+    if sum_abs_bias_dict:
+        max_effective_field = max(sum_abs_bias_dict.values())
+    else:
+        max_effective_field = 0
+    
     if max_effective_field == 0:
         hot_beta = 1
     else:
@@ -440,8 +487,13 @@ def _default_ising_beta_range(h, J):
     else:
         values_array = np.array(list(min_abs_bias_dict.values()),dtype=float)
         min_effective_field = np.min(values_array)
-        number_min_gaps = np.sum(min_effective_field == values_array)
-        cold_beta = np.log(100.0*number_min_gaps) / (2*min_effective_field)
+        if scale_T_with_N:
+            #This is effective assuming finite precision, for pathological
+            #or real valued problems this approximation may perform poorly
+            number_min_gaps = np.sum(min_effective_field == values_array)
+        else:
+            number_min_gaps = 1
+        cold_beta = np.log(number_min_gaps/max_single_qubit_excitation_rate) / (2*min_effective_field)
     
     return [hot_beta, cold_beta]
 
