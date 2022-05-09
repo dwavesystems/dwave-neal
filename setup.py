@@ -74,14 +74,13 @@ classifiers = [
     'License :: OSI Approved :: Apache Software License',
     'Operating System :: OS Independent',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
 ]
 
-python_requires = '>=3.6'
+python_requires = '>=3.7'
 
 # add __version__, __author__, __authoremail__, __description__ to this namespace
 exec(open("./neal/package_info.py").read())
