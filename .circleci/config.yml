@@ -28,11 +28,6 @@ jobs:
       - restore_cache: &build-linux-restore-cache
           keys:
             - pip-{{ .Environment.CIRCLE_JOB }}-{{ checksum "pyproject.toml" }}
-      - when:
-          condition:
-            equal: [3.6.8, << parameters.python-version>>]
-          steps:
-            - run: echo 'export CIBW_MANYLINUX_X86_64_IMAGE=manylinux1' >> $BASH_ENV
       - run: &build-linux-wheels
           name: build wheels
           command: |
@@ -273,17 +268,6 @@ jobs:
       - restore_cache:
           keys:
             - pyenv-{{ .Environment.CIRCLE_JOB }}-xcode13.2.0
-      - when:
-          # see https://github.com/pyenv/pyenv/issues/1643. We use an intermediate
-          # file so we can use the --skip-existing without raising errors from curl
-          condition:
-            equal: [3.6.8, << parameters.python-version>>]
-          steps:
-            - run:
-                name: Install Python 3.6 with a patch
-                command: |
-                  curl -sSL https://github.com/python/cpython/commit/8ea6353.patch > tmp.txt
-                  pyenv install -s --patch 3.6.8 < tmp.txt
       - run:
           name: install python
           command: |
@@ -364,7 +348,7 @@ workflows:
       - build-linux: &build
           matrix:
             parameters:
-              python-version: &python-versions [3.6.8, 3.7.9, 3.8.9, 3.9.4, 3.10.0]
+              python-version: &python-versions [3.7.9, 3.8.9, 3.9.4, 3.10.0]
       - build-linux-aarch64: *build
       - build-sdist
       - build-osx: &build-osx
@@ -373,8 +357,6 @@ workflows:
               python-version: *python-versions
               cibw-arch: [x86_64, universal2]
             exclude:
-              - python-version: 3.6.8
-                cibw-arch: universal2
               - python-version: 3.7.9
                 cibw-arch: universal2
       - build-windows: *build
@@ -409,20 +391,6 @@ workflows:
                 numpy-version: ~=1.20.0
                 dimod-version: ==0.9.11
               - python-version: 3.10.0
-                numpy-version: ~=1.20.0
-                dimod-version: ~=0.10.0
-              # Numpy 1.21.x doesn't support Python 3.6
-              - python-version: 3.6.8
-                numpy-version: ~=1.21.0
-                dimod-version: ==0.9.11
-              - python-version: 3.6.8
-                numpy-version: ~=1.21.0
-                dimod-version: ~=0.10.0
-              # Numpy 1.20.x doesn't support Python 3.6
-              - python-version: 3.6.8
-                numpy-version: ~=1.20.0
-                dimod-version: ==0.9.11
-              - python-version: 3.6.8
                 numpy-version: ~=1.20.0
                 dimod-version: ~=0.10.0
               # dimod 0.9.11 doesn't support Python 3.10+
