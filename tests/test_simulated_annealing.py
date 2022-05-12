@@ -126,7 +126,7 @@ class TestSA(unittest.TestCase):
         self.assertTrue(samples.shape == (num_samples, num_variables),
                         "Sampler returned wrong shape for samples")
         # make sure samples contain only +-1
-        self.assertTrue(set(np.unique(samples)) == {-1, 1},
+        self.assertTrue(set(np.unique(samples)).issubset({-1, 1}),
                         "Sampler returned spins with values not equal to +-1")
 
         # ensure energies is valid

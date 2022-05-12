@@ -378,7 +378,7 @@ def _default_ising_beta_range(h, J,
             Couplings of Ising model (also called quadratic biases)
 
         max_single_qubit_excitation_rate (float, optional, default = 0.01):
-            Targetted single qubit excitation rate at final temperature.
+            Targeted single qubit excitation rate at final temperature.
             We can set this value small to lower the probability of 
             excitations at the end of the anneal, combined with a simple 
             approximation to the ground-state energy structure. 
@@ -408,7 +408,7 @@ def _default_ising_beta_range(h, J,
     a global (or local) minimum.
     """
     if not (max_single_qubit_excitation_rate>0 and max_single_qubit_excitation_rate<1):
-        raise ValueError('Targetted single qubit excitations rates must be in range (0,1)')
+        raise ValueError('Targeted single qubit excitations rates must be in range (0,1)')
     
     
     # Approximate worst and best cases of the [non-zero] energy signal (effective field)
