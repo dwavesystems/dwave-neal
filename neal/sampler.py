@@ -174,7 +174,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 with all of the samples and energies found so far.
 
         Returns:
-            :obj:`dimod.Response`: A `dimod` :obj:`~dimod.Response` object.
+            :class:`dimod.SampleSet`
 
         Examples:
             This example runs simulated annealing on a binary quadratic model with some
