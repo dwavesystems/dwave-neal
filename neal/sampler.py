@@ -452,10 +452,7 @@ def _default_ising_beta_range(h, J,
     # This is solved as hot_beta = log(2)/max_delta_energy, max_delta energy is twice the
     # effective field, we take a worst case of the effective field to be conservative.
     # Max delta energy occurs when all biases are aligned, and contribute without frustration:
-    if sum_abs_bias_dict:
-        max_effective_field = max(sum_abs_bias_dict.values())
-    else:
-        max_effective_field = 0
+    max_effective_field = max(sum_abs_bias_dict.values(), default=0)
     
     if max_effective_field == 0:
         hot_beta = 1
