@@ -407,7 +407,7 @@ def _default_ising_beta_range(h, J,
     energy gap, such that for the final sweeps states are highly unlikely to excite away from 
     a global (or local) minimum.
     """
-    if not (max_single_qubit_excitation_rate>0 and max_single_qubit_excitation_rate<1):
+    if not 0 < max_single_qubit_excitation_rate < 1:
         raise ValueError('Targeted single qubit excitations rates must be in range (0,1)')
     
     
