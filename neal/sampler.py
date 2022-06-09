@@ -415,7 +415,7 @@ def _default_ising_beta_range(h, J,
     # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
     sum_abs_bias_dict = defaultdict(int, {k: abs(v) for k, v in h.items()})
     if sum_abs_bias_dict:
-        min_abs_bias_dict = {key: sum_abs_bias_dict[key] for key in sum_abs_bias_dict if sum_abs_bias_dict[key]!=0}
+        min_abs_bias_dict = {k: v for k, v in sum_abs_bias_dict.items() if v != 0}
     else:
         min_abs_bias_dict = {}
     #This loop is slow, but is not a bottleneck for practical implementations of simulated annealing:
