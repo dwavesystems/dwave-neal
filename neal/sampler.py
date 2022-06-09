@@ -274,7 +274,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if not isinstance(num_sweeps_per_beta, Integral):
             error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise TypeError(error_msg)
-        elif num_sweeps_per_beta < 1:
+        if num_sweeps_per_beta < 1:
             error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise ValueError(error_msg)
         
@@ -293,17 +293,17 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 if num_sweeps is not None and num_sweeps!=len(beta_schedule)*num_sweeps_per_beta:
                     error_msg = "'num_sweeps' should be set to None, or a value consistent with 'beta_schedule' and 'num_sweeps_per_beta' for 'beta_schedule_type' = 'custom': value = ".format(num_sweeps)
                     raise ValueError(error_msg)
-                elif beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]!=beta_schedule[-1]):
+                if beta_range is not None and (beta_range[0]!=beta_schedule[0] or beta_range[-1]!=beta_schedule[-1]):
                     error_msg = "'beta_range' should be set to None, or a value consistent with 'beta_schedule', for 'beta_schedule_type'='custom'."
                     raise ValueError(error_msg)
-                elif np.min(beta_schedule)<0:
+                if np.min(beta_schedule)<0:
                     error_msg = "'beta_schedule' cannot include negative values."
                     raise ValueError(error_msg)
         else:
             if beta_schedule is not None:
                 error_msg = "'beta_schedule' must be set to None for 'beta_schedule_type' not equal to 'custom'"
                 raise ValueError(error_msg)
-            elif num_sweeps is None:
+            if num_sweeps is None:
                 num_sweeps = 1000
                 
             num_betas, rem = divmod(num_sweeps,num_sweeps_per_beta)
