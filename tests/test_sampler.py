@@ -25,7 +25,44 @@ import dimod
 import neal
 from neal import Neal
 
+class TestSchedules(unittest.TestCase):
+    def test_schedules(self):
+        sampler = Neal()
+        num_vars = 40
+        h = {v: -1 for v in range(num_vars)}
+        J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
+        num_reads = 10
+        for schedule_type in ['geometric','linear']:
+            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type=schedule_type)
 
+            row, col = resp.record.sample.shape
+            
+            self.assertEqual(row, num_reads)
+            self.assertEqual(col, num_vars)  # should get back two variables
+            self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
+            with self.assertRaises(ValueError):
+                #Should not accept schedule:
+                resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type=schedule_type,beta_schedule=[-1,1])
+        with self.assertRaises(ValueError):
+            sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='asd')
+
+    def test_custom_schedule(self):
+        sampler = Neal()
+        num_vars = 40
+        h = {v: -1 for v in range(num_vars)}
+        J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
+        num_reads = 1
+        with self.assertRaises(ValueError):
+            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom')
+        with self.assertRaises(ValueError):
+            #Positivity
+            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[-1,1])
+        with self.assertRaises(ValueError):
+            #numeric
+            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=['asd',1])
+            
+        resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
+        
 class TestSimulatedAnnealingSampler(unittest.TestCase):
     def test_instantiation(self):
         sampler = Neal()
@@ -170,23 +207,6 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertEqual(col, 6)  # should get back two variables
         self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
 
-    def test_geometric_schedule(self):
-        sampler = Neal()
-        num_vars = 40
-        h = {v: -1 for v in range(num_vars)}
-        J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
-        num_reads = 10
-
-        resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='geometric')
-
-        row, col = resp.record.sample.shape
-
-        self.assertEqual(row, num_reads)
-        self.assertEqual(col, num_vars)  # should get back two variables
-        self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
-
-        with self.assertRaises(ValueError):
-            sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='asd')
 
     def test_interrupt_error(self):
         sampler = Neal()
@@ -300,7 +320,9 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
 class TestDefaultBetaRange(unittest.TestCase):
     def test_empty_problem(self):
-        self.assertEqual(neal.sampler._default_ising_beta_range({}, {}), [.1, 1.0])
+        #Values have no impact on behaviour, but should conform to documented structure
+        beta_range = neal.sampler._default_ising_beta_range({}, {})
+        self.assertTrue(len(beta_range)==2 and min(beta_range)>= 0)
 
     def test_single_variable_ising_problem(self):
         h1, c1 = neal.sampler._default_ising_beta_range({'a': 0.1}, {})
@@ -315,7 +337,6 @@ class TestDefaultBetaRange(unittest.TestCase):
         h1, c1 = neal.sampler._default_ising_beta_range({}, {'ab': 0.1})
         h2, c2 = neal.sampler._default_ising_beta_range({}, {'ab': 1})
         h3, c3 = neal.sampler._default_ising_beta_range({}, {'ab': 10})
-
         self.assertTrue(h1 > h2 > h3)
         self.assertTrue(c1 > c2 > c3)
         self.assertTrue(h1 < c1 and h2 < c2 and h3 < c3)
@@ -333,7 +354,25 @@ class TestDefaultBetaRange(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': 1}, {'bc': 1})
         self.assertEqual(neal.default_beta_range(bqm),
                          neal.default_beta_range(bqm.binary))
+        
+    def test_scale_T_with_N(self):
+        res1 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=False)
+        res2 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=True)
+        #2 gaps of 2, should indicate lower end temperature:
 
+        self.assertTrue(res1[1] > res1[0] and res1[0]>0)
+        self.assertTrue(res2[1] > res2[0] and res2[0]>0)
+        self.assertTrue(res1[0] == res2[0])
+        self.assertTrue(res2[1] > res1[1])
+
+    def test_max_single_qubit_excitation_rate(self):
+        res1 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.01)
+        res2 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.0001)
+        #Lower rate should indicate lower end temperature:
+        self.assertTrue(res1[1] > res1[0] and res1[0]>0)
+        self.assertTrue(res2[1] > res2[0] and res2[0]>0)
+        self.assertTrue(res1[0] == res2[0])
+        self.assertTrue(res2[1] > res1[1])
 
 class TestHeuristicResponse(unittest.TestCase):
     def test_job_shop_scheduling_with_linear(self):
