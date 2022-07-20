@@ -11,8 +11,5 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
 
-from dwave.samplers.sa.sampler import *
-
-from dwave.samplers.sa.sampler import default_beta_range
+from dwave.samplers.sa.simulated_annealing import *

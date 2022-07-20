@@ -11,13 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# ================================================================================================
 
-from __future__ import absolute_import
+from dwave.samplers.sa import *
 
-from neal.sampler import *
-import neal.sampler
-
-from neal.package_info import __version__
-import neal.package_info
+from dwave.samplers.sa.sampler import default_beta_range
