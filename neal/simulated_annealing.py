@@ -11,10 +11,5 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# ================================================================================================
 
-__version__ = '0.6.0.dev0'
-__author__ = 'D-Wave Systems Inc.'
-__authoremail__ = 'wbernoudy@dwavesys.com'
-__description__ = 'General Ising graph simulated annealing solver'
+from dwave.samplers.sa.simulated_annealing import simulated_annealing

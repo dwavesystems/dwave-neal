@@ -1,5 +1,1 @@
-numpy==1.19.1;python_version<"3.10"
-numpy==1.21.4;python_version>="3.10"
-cython==0.29.24
-dimod==0.9.11;python_version<"3.10"
-dimod==0.10.10;python_version>="3.10"
+dwave-samplers==1.0.0.dev0
