@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from dwave.samplers.sa import *
+from neal.sampler import *
+import neal.sampler
 
-from dwave.samplers.sa.sampler import default_beta_range
+from neal.package_info import __version__
+import neal.package_info

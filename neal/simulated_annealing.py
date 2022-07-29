@@ -12,4 +12,4 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from dwave.samplers.sa.simulated_annealing import *
+from dwave.samplers.sa.simulated_annealing import simulated_annealing

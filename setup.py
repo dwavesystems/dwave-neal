@@ -33,5 +33,4 @@ setup(
     packages=['neal'],
     install_requires=install_requires,
     python_requires=python_requires,
-    zip_safe=False
 )
