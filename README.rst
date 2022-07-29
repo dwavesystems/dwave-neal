@@ -1,6 +1,9 @@
-+--------------------------------------------------------------------------------------------------------------------+
-| *Note*: *dwave-neal* is deprecated in favor of `dwave-samplers <https://github.com/dwavesystems/dwave-samplers>`_. |
-+--------------------------------------------------------------------------------------------------------------------+
++------------------------------------------------------------------------------------------------------------------------------+
+| |warning| *Note*: *dwave-neal* is deprecated in favor of `dwave-samplers <https://github.com/dwavesystems/dwave-samplers>`_. |
++------------------------------------------------------------------------------------------------------------------------------+
+
+.. |warning| image:: https://github.githubassets.com/images/icons/emoji/unicode/26a0.png
+    :width: 16
 
 .. image:: https://img.shields.io/pypi/v/dwave-neal.svg
     :target: https://pypi.org/project/dwave-neal
