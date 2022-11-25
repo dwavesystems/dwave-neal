@@ -2,7 +2,7 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import os
 
-install_requires = ['dwave-samplers>=1.0.0.dev0,<2.0.0']
+install_requires = ['dwave-samplers>=1.0.0,<2.0.0']
 
 classifiers = [
     'License :: OSI Approved :: Apache Software License',
@@ -12,6 +12,7 @@ classifiers = [
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
 
 python_requires = '>=3.7'
