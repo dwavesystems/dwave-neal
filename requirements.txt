@@ -1,1 +1,1 @@
-dwave-samplers==1.0.0.dev0
+dwave-samplers==1.0.0
